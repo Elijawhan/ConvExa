@@ -9,13 +9,12 @@ std::vector<double> host_convolve(const std::vector<double> &signal, const std::
     {
         // for each output location
         double sum = 0;
-        for (size_t i = kernel.size(); i-- > 0;)
+        for (size_t i = 0; i < kernel.size(); i++)
         {
-            if (n >= i)
+            if (n >= i && (n-i) < signal.size())
                 sum += kernel[i] * signal[n - i];
         }
         result.push_back(sum);
     }
-
     return result;
 }
