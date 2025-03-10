@@ -4,7 +4,7 @@
 
 #include <vector>
 std::vector<double> host_convolve(const std::vector<double>& signal, const std::vector<double>& kernel);
-
+std::vector<double> host_dft(const std::vector<double> &signal);
 
 
 #endif

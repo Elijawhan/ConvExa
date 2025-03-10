@@ -16,7 +16,7 @@ find_package(pybind11 REQUIRED)
 set(CONVEXA_SOURCES
     src/convexa.cpp
     src/convolutions/host_convolve.cpp
-    # src/fft/fft.cpp
+    src/dfts/host_dft.cpp
 )
 
 # Define the Python module
@@ -25,6 +25,7 @@ pybind11_add_module(
     bindings.cpp      # Bindings
     ${CONVEXA_SOURCES} # All source files
 )
+target_link_libraries(convexa PRIVATE Python3::Python)
 
 # Include directories
 target_include_directories(convexa PRIVATE
