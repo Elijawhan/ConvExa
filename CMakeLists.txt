@@ -1,41 +1,42 @@
-# Minimum CMake version
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.15)
+project(convexa VERSION 1.0.0) # Add a version
 
-# Project name
-project(ConvExa CXX)
+# Create the library
+add_library(convexa src/convexa.cpp)
 
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# Install the library
+install(TARGETS convexa
+        EXPORT convexaTargets
+        LIBRARY DESTINATION lib)
 
-# Find Python and pybind11
-find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
-find_package(pybind11 REQUIRED)
+# Install the headers
+install(FILES src/convexa.h
+        DESTINATION include)
 
-# Define source files (including subdirectories)
-set(CONVEXA_SOURCES
-    src/convexa.cpp
-    src/convolutions/host_convolve.cpp
-    src/dfts/host_dft.cpp
+# Generate and install the config file
+install(EXPORT convexaTargets
+        FILE convexa-config.cmake
+        NAMESPACE convexa::
+        DESTINATION lib/cmake/convexa)
+
+# Generate libconvexaTargets.cmake for export
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/convexa-config-version.cmake"
+    VERSION "${PROJECT_VERSION}"
+    COMPATIBILITY AnyNewerVersion
 )
 
-# Define the Python module
-pybind11_add_module(
-    convexa           # Module name
-    bindings.cpp      # Bindings
-    ${CONVEXA_SOURCES} # All source files
-)
-target_link_libraries(convexa PRIVATE Python3::Python)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/convexa-config-version.cmake"
+        DESTINATION lib/cmake/convexa)
 
-# Include directories
-target_include_directories(convexa PRIVATE
-    ${CMAKE_SOURCE_DIR}/include  # For convexa.h
-    ${CMAKE_SOURCE_DIR}/src/convolutions  # For convolve.h
-    ${CMAKE_SOURCE_DIR}/src/dfts          # For fft.h
-)
+# Set the include directories property
+target_include_directories(convexa PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:include>) # important for install
 
-# Optional: Optimize for performance
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    target_compile_options(convexa PRIVATE -O3)
-endif()
+# Set the install prefix.
+set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE PATH "Install prefix" FORCE)
 
+# Set the library output name.
+set_target_properties(convexa PROPERTIES OUTPUT_NAME "convexa")
