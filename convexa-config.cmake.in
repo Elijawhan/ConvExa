@@ -1,0 +1,7 @@
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/convexaTargets.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/convexa-config-version.cmake")
+
+# Optionally define variables or functions here
+

@@ -1,4 +1,4 @@
-#include "../convexa.h"
+#include <convexa.h>
 
 std::vector<std::complex<double>> host_dft(const std::vector<double> &signal)
 {

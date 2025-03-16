@@ -9,4 +9,4 @@ build
 *.so
 .venv
 *.sif
-
+__pycache__

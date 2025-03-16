@@ -1,4 +1,4 @@
-#include "../convexa.h"
+#include <convexa.h>
 std::vector<double> host_convolve(const std::vector<double> &signal, const std::vector<double> &kernel)
 {
     size_t ol = signal.size() + kernel.size() - 1;

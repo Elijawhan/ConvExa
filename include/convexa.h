@@ -5,6 +5,9 @@
 #include <complex>
 #include <cmath>
 #include <math.h>
+
+void hello_amazing_convexa_world();
+
 namespace ConvExa
 {
 constexpr std::complex<double> j(0.0, 1.0);

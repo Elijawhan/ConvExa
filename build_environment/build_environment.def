@@ -26,7 +26,7 @@ From: ubuntu:22.04
     python -m pip install --upgrade pip
 
     # Install Python libraries
-    python -m pip install \
+    python -m pip install --upgrade \
         matplotlib \
         numpy \
         pybind11 \
@@ -40,6 +40,7 @@ From: ubuntu:22.04
         ipython \
         jupyter
 
+    python -m pip install --upgrade numpy
 
 %environment
     export PATH="/usr/local/bin:$PATH"
