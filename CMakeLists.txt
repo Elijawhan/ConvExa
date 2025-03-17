@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 project(convexa VERSION 1.0.0) # Add a version
-
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 # Create the library
 add_library(convexa
   src/convexa.cpp
