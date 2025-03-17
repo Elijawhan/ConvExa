@@ -1,7 +1,6 @@
 import numpy as np
 import convexa as cx
-
-
+# import convexa_core as cx
 a = np.array(range(5))
 b = np.zeros(shape=(5))
 b[0] = 1
