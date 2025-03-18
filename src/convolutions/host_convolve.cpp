@@ -18,3 +18,19 @@ std::vector<double> host_convolve(const std::vector<double> &signal, const std::
     }
     return result;
 }
+
+double CETiming::host_convolve(const std::vector<double>& signal, const std::vector<double>& kernel, std::vector<double>& output) {
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    output = ::host_convolve(signal, kernel);
+    output.push_back(-1);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    if (duration.count() > 0) {
+        return duration.count() * 1000.0;
+    } else {
+        return 0;
+    }
+}
