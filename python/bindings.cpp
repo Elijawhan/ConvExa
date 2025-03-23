@@ -6,7 +6,7 @@
 namespace py = pybind11;
 
 PYBIND11_MODULE(convexa_core, m) {
-    m.def("host_dft", &host_dft, "Compute DFT of a real-valued signal", py::arg("signal"));
-    m.def("host_convolve", &host_convolve, "Convolve signal with kernel", 
+    m.def("host_dft", &ConvExa::host_dft, "Compute DFT of a real-valued signal", py::arg("signal"));
+    m.def("host_convolve", &ConvExa::host_convolve, "Convolve signal with kernel", 
           py::arg("signal"), py::arg("kernel"));
 }

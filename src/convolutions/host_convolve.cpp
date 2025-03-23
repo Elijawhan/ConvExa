@@ -1,4 +1,7 @@
 #include <convexa.h>
+
+namespace ConvExa
+{
 std::vector<double> host_convolve(const std::vector<double> &signal, const std::vector<double> &kernel)
 {
     size_t ol = signal.size() + kernel.size() - 1;
@@ -18,12 +21,13 @@ std::vector<double> host_convolve(const std::vector<double> &signal, const std::
     }
     return result;
 }
+}
 
 double CETiming::host_convolve(const std::vector<double>& signal, const std::vector<double>& kernel, std::vector<double>& output) {
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    output = ::host_convolve(signal, kernel);
+    output = ConvExa::host_convolve(signal, kernel);
     output.push_back(-1);
 
     auto end = std::chrono::high_resolution_clock::now();

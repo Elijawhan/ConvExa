@@ -1,5 +1,7 @@
 #include <convexa.h>
 
+namespace ConvExa
+{
 std::vector<std::complex<double>> host_dft(const std::vector<double> &signal)
 {
     size_t N = signal.size();
@@ -20,3 +22,22 @@ std::vector<std::complex<double>> host_dft(const std::vector<double> &signal)
     }
     return result;
 }
+}
+
+namespace CETiming
+{
+double host_dft(const std::vector<double>& signal, std::vector<std::complex<double>>& output)
+{
+    auto start = std::chrono::high_resolution_clock::now();
+
+    output = ConvExa::host_dft(signal);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    if (duration.count() > 0) {
+        return duration.count() * 1000.0;
+    } else {
+        return 0;
+    }
+}
+} //end namespace 
