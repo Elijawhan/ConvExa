@@ -9,7 +9,7 @@ namespace CXKernels {
             // Convert the pixel
             for (int i = 0; i < bN; i += 1) // scuttles down the kernel
             {
-                if (n >= i && (n-i) < signal.size())
+                if (n >= i && (n-i) < aN)
                 sum += B[i] * A[n - i];
             }
             C[n] = sum;
