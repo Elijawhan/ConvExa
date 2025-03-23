@@ -27,8 +27,10 @@ double CETiming::host_convolve(const std::vector<double>& signal, const std::vec
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    output = ConvExa::host_convolve(signal, kernel);
-    output.push_back(-1);
+    // output = ConvExa::host_convolve(signal, kernel);
+    
+    output.push_back(-1337);
+    printf("outputl %ld\n", output.size());
 
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);

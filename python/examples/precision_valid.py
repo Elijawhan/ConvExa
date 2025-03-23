@@ -7,8 +7,9 @@ b[0] = 1
 b[1] = 1
 # Convolution is commutative; order doesn't have any effect on output
 c = np.convolve(b, a)
-c_convexa = cx.host_convolve(a, b)
-
+c_convexa = cx.host_convolve(cx.dArray(a), cx.dArray(b))
+c_r = cx.dArray([3])
+timing = cx.host_convolve_timing(cx.dArray(a), cx.dArray(b), c_r)
 
 
 def max_abs_error (reference, implementation) :
@@ -16,11 +17,23 @@ def max_abs_error (reference, implementation) :
     implementation_tst = np.array(implementation)
     return max(np.abs(implementation_tst - reference_tst) )
 
+def test_all(fn_list, expected_result, *args):
+    for fn in fn_list:
+        result = fn(*args)
+        if (max_abs_error(expected_result, result) > 1e-5):
+            status = "FAILED"
+        else:
+            status = "PASSED"
+        # print(f"Error for fn {fn.__name__} = {max_abs_error(expected_result, result)}")
+        print(f"fn {fn.__name__}: {status}")
+
 
 
 
 
 if __name__ == "__main__" :
-    print(c)
-    print(c_convexa)
-    print(max_abs_error(c, c_convexa))
+    a = cx.dArray(a)
+    b = cx.dArray(b)
+    test_all([cx.host_convolve], c, a, b)
+    # print(max_abs_error(c, c_convexa))
+    # print(f"Timing Test: {timing}, Result: {c_r}")
