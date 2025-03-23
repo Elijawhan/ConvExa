@@ -1,12 +1,18 @@
 cmake_minimum_required(VERSION 3.15)
-project(convexa VERSION 1.0.0) # Add a version
+project(convexa VERSION 1.0.0
+  LANGUAGES CXX CUDA) # Add a version
+
+find_package(CUDAToolkit REQUIRED)
 
 # Create the library
 add_library(convexa
   src/convexa.cpp
   src/convolutions/host_convolve.cpp
   src/dfts/host_dft.cpp
+  src/MathOperation.cu
 )
+
+target_link_libraries(convexa PRIVATE CUDA::cudart)
 
 # Install the library
 install(TARGETS convexa
@@ -20,9 +26,10 @@ install(EXPORT convexaTargets
         DESTINATION lib/cmake/convexa)
 
 # Install the headers
-install(FILES include/convexa.h
+install(FILES
+          include/convexa.h
+          include/MathOperation.h
         DESTINATION include)
-
 
 # Generate libconvexaTargets.cmake for export
 include(CMakePackageConfigHelpers)
