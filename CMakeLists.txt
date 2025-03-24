@@ -31,7 +31,7 @@ install(EXPORT convexaTargets
         DESTINATION lib/cmake/convexa)
 
 # Install the headers
-install(FILES include/convexa.h
+install(FILES include/convexa.h include/cxkernels.h
         DESTINATION include)
 
 

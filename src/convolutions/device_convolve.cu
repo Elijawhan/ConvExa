@@ -1,6 +1,7 @@
 #include <convexa.h>
+#include <cxkernels.h>
 #include <cuda_runtime.h>
-#include <cuda/std/complex>
+#include <helper_cuda.h>
 namespace CXKernels
 {
     template <typename T = double>
@@ -20,6 +21,52 @@ namespace CXKernels
         }
     }
 }
-double CXTiming::device_convolve(const std::vector<double> &signal, const std::vector<double> &kernel, std::vector<double> &output)
+float CXTiming::device_convolve(const std::vector<double> &signal, const std::vector<double> &kernel, std::vector<double> &output)
 {
+    float *device_a = nullptr;
+    float *device_b = nullptr;
+    float *device_c = nullptr;
+
+    size_t byte_size_sig = signal.size() * sizeof(double);
+    size_t byte_size_kernel = kernel.size() * sizeof(double);
+    size_t ol = (signal.size() + kernel.size() - 1);
+    size_t byte_size_output = ol * sizeof(double);
+    output.reserve(ol);
+
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    checkCudaErrors(cudaMalloc(&device_a, byte_size_sig));
+    checkCudaErrors(cudaMemcpy(device_a, signal.data(), byte_size_sig, cudaMemcpyHostToDevice));
+
+    checkCudaErrors(cudaMalloc(&device_b, byte_size_kernel));
+    checkCudaErrors(cudaMemcpy(device_b, kernel.data(), byte_size_kernel, cudaMemcpyHostToDevice));
+
+    checkCudaErrors(cudaMalloc(&device_c, byte_size_output));
+    // We don't actually need to do any copying, as a matter of fact, that could result in stinky.
+    // checkCudaErrors(cudaMemcpy(device_c, C, byte_size, cudaMemcpyHostToDevice));
+
+
+    dim3 blockSize(1024);
+    int blocks = signal.size() / blockSize.x + 1;
+    dim3 gridSize(blocks);
+    cudaEventRecord(start);
+    // Memory Loaded, Perform Computations...
+    CXKernels::basic_full_convolve<<<gridSize, blockSize>>>(device_a, device_b, device_c, signal.size(), kernel.size(), ol );
+
+    cudaEventRecord(stop);
+
+    // Finish Computations before this block
+    checkCudaErrors(cudaMemcpy(output.data(), device_c, byte_size_output, cudaMemcpyDeviceToHost));
+
+    cudaEventSynchronize(stop);
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+
+    checkCudaErrors(cudaFree(device_a));
+    checkCudaErrors(cudaFree(device_b));
+    checkCudaErrors(cudaFree(device_c));
+
+    return milliseconds;
 }
