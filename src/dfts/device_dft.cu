@@ -1,4 +1,5 @@
 #include <convexa.h>
+#include <cxkernels.h>
 #include <cuda_runtime.h>
 #include <cuda/std/complex>
 namespace CXKernels

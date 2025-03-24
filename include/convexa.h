@@ -6,14 +6,12 @@
 #include <math.h>
 #include <chrono>
 
-
 void hello_amazing_convexa_world();
+
 
 namespace ConvExa
 {
 constexpr std::complex<double> j(0.0, 1.0);
-constexpr cuda::std::complex<double> j_d(0.0, 1.0);
-constexpr cuda::std::complex<float> j_f(0.0, 1.0);
 constexpr double pi = 3.141592653589793238462643383279;
 constexpr float pi_f = 3.141592653589793238462643383279f;
 
