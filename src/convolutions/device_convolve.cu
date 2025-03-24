@@ -1,5 +1,6 @@
 #include <convexa.h>
-
+#include <cuda_runtime.h>
+#include <cuda/std/complex>
 namespace CXKernels {
     __global__ void basic_full_convolve(float*A, float*B, float*C, unsigned int aN, unsigned int bN, unsigned int cN) {
         unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;

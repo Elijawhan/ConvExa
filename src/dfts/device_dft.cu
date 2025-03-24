@@ -1,7 +1,7 @@
 #include <convexa.h>
 #include <cuda_runtime.h>
 #include <cuda/std/complex>
-
+constexpr cuda::std::complex<float> j_cuda(0.0, 1.0);
 namespace CXKernels
 {
 __global__ void device_dft(float* signal, uint32_t length, cuda::std::complex<float>* result)
@@ -14,7 +14,7 @@ __global__ void device_dft(float* signal, uint32_t length, cuda::std::complex<fl
         for (uint32_t i = 0; i < length; i++)
         {
             cuda::std::complex<float> exponential = cuda::std::expf(
-                -(ConvExa::j_cuda * 2.0 * ConvExa::pi * 
+                -(::j_cuda * 2.0 * ConvExa::pi * 
                   double(index) * double(i) / double(length))
             );
             sum += exponential;

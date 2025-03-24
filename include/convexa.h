@@ -6,8 +6,7 @@
 #include <cmath>
 #include <math.h>
 #include <chrono>
-#include <cuda_runtime.h>
-#include <cuda/std/complex>
+
 
 void hello_amazing_convexa_world();
 

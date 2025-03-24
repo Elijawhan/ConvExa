@@ -22,10 +22,10 @@ if(APPLE)
         INSTALL_RPATH "@loader_path"
     )
 elseif(UNIX AND NOT APPLE)  # Linux (e.g., ASAX)
-    set_target_properties(convexa_core PROPERTIES
-        BUILD_WITH_INSTALL_RPATH TRUE
-        INSTALL_RPATH "$ORIGIN"
-    )
+    # set_target_properties(convexa_core PROPERTIES
+    #     BUILD_WITH_INSTALL_RPATH TRUE
+    #     INSTALL_RPATH "$ORIGIN"
+    # )
 endif()
 # Install the convexa module to the correct location
 # Determine the Python site-packages directory
