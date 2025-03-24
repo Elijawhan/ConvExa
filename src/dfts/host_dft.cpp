@@ -24,9 +24,7 @@ std::vector<std::complex<double>> host_dft(const std::vector<double> &signal)
 }
 }
 
-namespace CETiming
-{
-double host_dft(const std::vector<double>& signal, std::vector<std::complex<double>>& output)
+double CXTiming::host_dft(const std::vector<double>& signal, std::vector<std::complex<double>>& output)
 {
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -40,4 +38,3 @@ double host_dft(const std::vector<double>& signal, std::vector<std::complex<doub
         return 0;
     }
 }
-} //end namespace 

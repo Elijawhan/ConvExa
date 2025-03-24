@@ -21,8 +21,9 @@ std::vector<std::complex<double>> host_dft(const std::vector<double>& signal);
 class Convexor;
 } //End namespace ConvExa
 
-namespace CETiming
+namespace CXTiming
 {
+double device_convolve(const std::vector<double>& signal, const std::vector<double>& kernel, std::vector<double>& output);
 double host_convolve(const std::vector<double>& signal, const std::vector<double>& kernel, std::vector<double>& output);
 double host_dft(const std::vector<double>& signal, std::vector<std::complex<double>>& output);
 }
