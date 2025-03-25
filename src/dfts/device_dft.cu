@@ -15,7 +15,7 @@ __global__ void device_dft(const T* signal, const uint32_t length, cuda::std::co
         for (uint32_t i = 0; i < length; i++)
         {
             cuda::std::complex<T> exponential = cuda::std::expf(
-                -(ConvExa::j_f * 2.0 * ConvExa::pi * 
+                -(ConvExa::j_f * 2.0 * ConvExa::pi_f * 
                  static_cast<T>(index) * static_cast<T>(i) / static_cast<T>(length))
             );
             sum += exponential;
@@ -39,7 +39,7 @@ void ConvExa::device_dft(const T* signal, const uint32_t length, cuda::std::comp
 }
 
 template< typename T = double >
-void CXTiming::device_dft(const std::vector<T> &signal, std::vector<std::complex<T>> result)
+float CXTiming::device_dft(const std::vector<T> &signal, std::vector<std::complex<T>> result)
 {
     float *device_a = nullptr;
     float *device_c = nullptr;
@@ -79,5 +79,5 @@ void CXTiming::device_dft(const std::vector<T> &signal, std::vector<std::complex
     return milliseconds;
 }
 
-template void CXTiming::device_dft(const std::vector<float> &signal, std::vector<std::complex<float>> result);
-template void CXTiming::device_dft(const std::vector<double> &signal, std::vector<std::complex<double>> result);
+template void CXTiming::device_dft<float>(const std::vector<float> &signal, std::vector<std::complex<float>> result);
+template void CXTiming::device_dft<double>(const std::vector<double> &signal, std::vector<std::complex<double>> result);
