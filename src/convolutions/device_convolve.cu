@@ -24,9 +24,9 @@ namespace CXKernels
 template <typename T= double>
 float CXTiming::device_convolve(const std::vector<T> &signal, const std::vector<T> &kernel, std::vector<T> &output)
 {
-    double *device_a = nullptr;
-    double *device_b = nullptr;
-    double *device_c = nullptr;
+    T *device_a = nullptr;
+    T *device_b = nullptr;
+    T *device_c = nullptr;
     size_t byte_size_sig = signal.size() * sizeof(T);
     size_t byte_size_kernel = kernel.size() * sizeof(T);
     size_t ol = (signal.size() + kernel.size() - 1);
@@ -54,7 +54,7 @@ float CXTiming::device_convolve(const std::vector<T> &signal, const std::vector<
     dim3 gridSize(blocks);
     cudaEventRecord(start);
     // Memory Loaded, Perform Computations...
-    CXKernels::basic_full_convolve<<<gridSize, blockSize>>>(device_a, device_b, device_c, signal.size(), kernel.size(), ol );
+    CXKernels::basic_full_convolve<T><<<gridSize, blockSize>>>(device_a, device_b, device_c, signal.size(), kernel.size(), ol );
 
     cudaEventRecord(stop);
 
@@ -73,3 +73,4 @@ float CXTiming::device_convolve(const std::vector<T> &signal, const std::vector<
 }
 
 template float CXTiming::device_convolve<double>(const std::vector<double>&, const std::vector<double>&, std::vector<double>&);
+template float CXTiming::device_convolve<uint16_t>(const std::vector<uint16_t>&, const std::vector<uint16_t>&, std::vector<uint16_t>&);

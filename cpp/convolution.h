@@ -4,12 +4,12 @@
 
 void c_main() {
     printf("Hello from Convolve main!\n");
-    std::vector<double> myVec = {2, 1, 3, 5, 7, 6, 4, 5, 7, 4, 2, 5, 5, 2, 9, 10};
-    std::vector<double> myKernel = {0.125, -0.125, 0.375, -0.375}; 
+    std::vector<uint16_t> myVec = {2, 1, 3, 5, 7, 6, 4, 5, 7, 4, 2, 5, 5, 2, 9, 10};
+    std::vector<uint16_t> myKernel = {1, 2, 2, 1}; 
 
-    std::vector<double> myResult_h;
+    std::vector<uint16_t> myResult_h;
     float base_convolve_h_timing = CXTiming::host_convolve(myVec, myKernel, myResult_h);
-    std::vector<double> myResult_d;
+    std::vector<uint16_t> myResult_d;
     float base_convolve_d_timing = CXTiming::device_convolve(myVec, myKernel, myResult_d);
     
 

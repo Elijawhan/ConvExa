@@ -46,7 +46,7 @@ namespace HELP
     template <typename T = double>
     void print_vec(std::vector<T> vec) {
         for (T i: vec) {
-            printf("%f ", i);
+            printf("%d ", i);
         }
         printf("\n");
     }
