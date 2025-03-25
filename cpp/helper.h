@@ -112,7 +112,6 @@ namespace HELP
         numThingsRead = fread(&hdr, sizeof hdr , 1, input);
         uint16_t bytesPerSample = hdr.bitsPerSample / 8;      //Number     of bytes per sample
         uint64_t numSamples = hdr.ChunkSize / bytesPerSample; //How many samples are in the wav file?
-        printf("%d nsamp\n", numSamples);
         out->reserve(numSamples); // slight optimization
         static const uint16_t BUFFER_SIZE = 4096 /bytesPerSample; 
         int16_t* buffer = new int16_t[BUFFER_SIZE];
