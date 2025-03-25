@@ -5,8 +5,7 @@
 void c_main() {
     printf("Hello from Convolve main!\n");
     std::vector<int16_t> data;
-    HELP::wav_hdr hdr = HELP::read_wav("/home/uahclsd0085/ConvExa/cpp/audio/badadeedur.wav", &data);
-    std::vector<int16_t> myVec = {2, 1, 3, 5, 7, 6, 4, 5, 7, 4, 2, 5, 5, 2, 9, 10};
+    HELP::wav_hdr hdr = HELP::read_wav("./cpp/audio/badadeedur.wav", &data);
     std::vector<int16_t> myKernel = {-1, 1, -2, 2, 1, -1}; 
 
     std::vector<int16_t> myResult_h;
@@ -17,7 +16,7 @@ void c_main() {
 
 
 
-    HELP::write_wav("/home/uahclsd0085/ConvExa/cpp/audio/badadeedu.wav", myResult_d, hdr);
+    HELP::write_wav("./cpp/audio/badadeedu.wav", myResult_d, hdr);
 
     
 }
