@@ -31,6 +31,7 @@ namespace ConvExa
 }
 namespace CXTiming
 {
-    float device_convolve(const std::vector<double> &signal, const std::vector<double> &kernel, std::vector<double> &output);
+    template <typename T>
+    float device_convolve(const std::vector<T> &signal, const std::vector<T> &kernel, std::vector<T> &output);
     float device_dft(const std::vector<double> &signal, std::vector<std::complex<double>> &result);
 }

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-#PBS -N grayscale
+#PBS -N convexa
 #PBS -q classgpu
 #PBS -l select=1:gpuname=ampere:ngpus=1:ncpus=1:mpiprocs=1:mem=1000mb
 #PBS -l walltime=1:00:00
 #PBS -j oe
-#PBS -o grayscale.qsub_out
+#PBS -o convexa.qsub_out
 
 # change into submission directory
 cd $PBS_O_WORKDIR

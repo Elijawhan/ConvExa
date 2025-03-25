@@ -4,8 +4,8 @@
 
 void c_main() {
     printf("Hello from Convolve main!\n");
-    std::vector<double> myVec = {2, 1, 3, 5, 7, 6, 4};
-    std::vector<double> myKernel = {0.125, -0.125}; 
+    std::vector<double> myVec = {2, 1, 3, 5, 7, 6, 4, 5, 7, 4, 2, 5, 5, 2, 9, 10};
+    std::vector<double> myKernel = {0.125, -0.125, 0.375, -0.375}; 
 
     std::vector<double> myResult_h;
     float base_convolve_h_timing = CXTiming::host_convolve(myVec, myKernel, myResult_h);

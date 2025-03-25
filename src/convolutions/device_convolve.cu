@@ -21,15 +21,16 @@ namespace CXKernels
         }
     }
 }
-float CXTiming::device_convolve(const std::vector<double> &signal, const std::vector<double> &kernel, std::vector<double> &output)
+template <typename T= double>
+float CXTiming::device_convolve(const std::vector<T> &signal, const std::vector<T> &kernel, std::vector<T> &output)
 {
     double *device_a = nullptr;
     double *device_b = nullptr;
     double *device_c = nullptr;
-    size_t byte_size_sig = signal.size() * sizeof(double);
-    size_t byte_size_kernel = kernel.size() * sizeof(double);
+    size_t byte_size_sig = signal.size() * sizeof(T);
+    size_t byte_size_kernel = kernel.size() * sizeof(T);
     size_t ol = (signal.size() + kernel.size() - 1);
-    size_t byte_size_output = ol * sizeof(double);
+    size_t byte_size_output = ol * sizeof(T);
     output.resize(ol);
 
     cudaEvent_t start, stop;
@@ -70,3 +71,5 @@ float CXTiming::device_convolve(const std::vector<double> &signal, const std::ve
 
     return milliseconds;
 }
+
+template float CXTiming::device_convolve<double>(const std::vector<double>&, const std::vector<double>&, std::vector<double>&);
