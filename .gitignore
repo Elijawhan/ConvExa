@@ -11,3 +11,4 @@ build
 *.sif
 __pycache__
 *.qsub_out
+*.wav
