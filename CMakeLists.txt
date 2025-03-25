@@ -3,8 +3,6 @@ project(convexa VERSION 1.0.0
         LANGUAGES CXX CUDA) # Add a version
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_PREFIX_PATH "/apps/x86-64/apps/cuda_12.6.0")
-set(CMAKE_CUDA_ARCHITECTURES "80")
 set(CMAKE_CUDA_COMPILER "/apps/x86-64/apps/cuda_12.6.0/bin/nvcc")
 
 
