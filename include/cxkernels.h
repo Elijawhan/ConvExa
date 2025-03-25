@@ -4,7 +4,7 @@
 
 namespace ConvExa
 {
-    template <typename T = double>
+    template <typename T>
     void device_dft(const T *signal, const uint32_t length, cuda::std::complex<T> *result);
     void device_convolve(const double *signal, const double *kernel, double *out, uint32_t sN, uint32_t kN, uint32_t oN);
 
@@ -33,5 +33,6 @@ namespace CXTiming
 {
     template <typename T>
     float device_convolve(const std::vector<T> &signal, const std::vector<T> &kernel, std::vector<T> &output);
-    float device_dft(const std::vector<double> &signal, std::vector<std::complex<double>> &result);
+    template <typename T>
+    float device_dft(const std::vector<T> &signal, std::vector<std::complex<T>> &result);
 }
