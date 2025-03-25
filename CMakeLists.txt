@@ -14,6 +14,10 @@ add_library(convexa
 
 target_link_libraries(convexa PRIVATE CUDA::cudart)
 
+set_target_properties(convexa PROPERTIES
+  INSTALL_RPATH ${CUDAToolkit_LIBRARY_DIR}
+)
+
 # Install the library
 install(TARGETS convexa
         EXPORT convexaTargets

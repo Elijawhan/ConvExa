@@ -23,7 +23,8 @@ source build/install/convexa/bin/activate
 export CMAKE_INSTALL_PREFIX=`pwd`/build/install
 export CMAKE_PREFIX_PATH=`pwd`/build/install
 export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/usr/local/lib/python3.10/dist-packages/pybind11 \
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:`pwd`/build/install/lib:/apps/x86-64/apps/cuda_12.6.0/lib64
+# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:`pwd`/build/install/lib:/apps/x86-64/apps/cuda_12.6.0/lib64
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:`pwd`/build/install/lib
 python -m pip install ./python
 
 # run test
