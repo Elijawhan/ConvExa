@@ -23,17 +23,21 @@ void d_main() {
     printf("\n=========== Testing doubles... ===========\n");
     float h_runtime = CXTiming::host_dft<double>(myVec, result);
     float k_runtime = CXTiming::device_dft<double>(myVec, result_kernel);
-    printf("Host (double) ran for: %f ms.\n", h_runtime);
+    auto error_tupled = HELP::relative_error<std::complex<double>>(result_kernel, result);
+    printf("Host (double) ran for %f ms.\n", h_runtime);
     HELP::print_vec_complex(result);
-    printf("Kernel (double) ran for: %f ms.\n", k_runtime);
+    printf("Kernel (double) ran for %f ms with an error of %.8f (Absolute) and %.8f (Relative)\n",
+        k_runtime, std::get<0>(error_tupled), std::get<1>(error_tupled));
     HELP::print_vec_complex(result_kernel);
 
     printf("\n======== Testing 32-bit floats... ========\n");
     float h_runtimef = CXTiming::host_dft<float>(myVecf, resultf);
     float k_runtimef = CXTiming::device_dft<float>(myVecf, result_kernelf);
+    auto error_tuplef = HELP::relative_error<std::complex<float>>(result_kernelf, resultf);
     printf("Host (float) ran for: %f ms.\n", h_runtimef);
     HELP::print_vec_complex(resultf);
-    printf("Kernel (float) ran for: %f ms.\n", k_runtimef);
+    printf("Kernel (float) ran for: %f ms with an error of %.8f (Absolute) and %.8f (Relative)\n",
+        k_runtimef, std::get<0>(error_tuplef), std::get<1>(error_tuplef));
     HELP::print_vec_complex(result_kernelf);
     
 }
