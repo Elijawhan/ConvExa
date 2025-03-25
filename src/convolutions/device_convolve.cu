@@ -23,15 +23,14 @@ namespace CXKernels
 }
 float CXTiming::device_convolve(const std::vector<double> &signal, const std::vector<double> &kernel, std::vector<double> &output)
 {
-    float *device_a = nullptr;
-    float *device_b = nullptr;
-    float *device_c = nullptr;
-
+    double *device_a = nullptr;
+    double *device_b = nullptr;
+    double *device_c = nullptr;
     size_t byte_size_sig = signal.size() * sizeof(double);
     size_t byte_size_kernel = kernel.size() * sizeof(double);
     size_t ol = (signal.size() + kernel.size() - 1);
     size_t byte_size_output = ol * sizeof(double);
-    output.reserve(ol);
+    output.resize(ol);
 
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
@@ -49,6 +48,7 @@ float CXTiming::device_convolve(const std::vector<double> &signal, const std::ve
 
 
     dim3 blockSize(1024);
+    if (ol < 1024) blockSize.x = ol;
     int blocks = signal.size() / blockSize.x + 1;
     dim3 gridSize(blocks);
     cudaEventRecord(start);

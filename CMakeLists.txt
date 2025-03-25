@@ -14,7 +14,9 @@ find_package(CUDAToolkit REQUIRED)
 add_library(convexa
   src/convexa.cpp
   src/convolutions/host_convolve.cpp
+  src/convolutions/device_convolve.cu
   src/dfts/host_dft.cpp
+#   src/dfts/device_dft.cu
 )
 
 target_link_libraries(convexa PRIVATE CUDA::cudart)

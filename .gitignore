@@ -10,3 +10,4 @@ build
 .venv
 *.sif
 __pycache__
+*.qsub_out

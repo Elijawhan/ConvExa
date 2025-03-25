@@ -24,7 +24,7 @@ std::vector<std::complex<double>> host_dft(const std::vector<double> &signal)
 }
 }
 
-double CXTiming::host_dft(const std::vector<double>& signal, std::vector<std::complex<double>>& output)
+float CXTiming::host_dft(const std::vector<double>& signal, std::vector<std::complex<double>>& output)
 {
     auto start = std::chrono::high_resolution_clock::now();
 

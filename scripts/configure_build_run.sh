@@ -1,32 +1,29 @@
-#!/bin/bash
+#!/usr/bin/env bash
+#PBS -N grayscale
+#PBS -q classgpu
+#PBS -l select=1:gpuname=ampere:ngpus=1:ncpus=1:mpiprocs=1:mem=1000mb
+#PBS -l walltime=1:00:00
+#PBS -j oe
+#PBS -o grayscale.qsub_out
 
-# Script to configure, build, and install the convexa library using modern CMake syntax.
+# change into submission directory
+cd $PBS_O_WORKDIR
 
-# Create build directory
 rm -rf build
 mkdir -p build
 
 # Configure the project with CMake
 cmake -S . -B build \
   -DBUILD_SHARED_LIBS=ON \
+  -DCMAKE_CUDA_ARCHITECTURES="80" \
+  -DCMAKE_PREFIX_PATH="/apps/x86-64/apps/cuda_12.6.0" \
   -DCMAKE_INSTALL_PREFIX=$(pwd)/build/install && \
   cmake --build build -j $(nproc) && \
   cmake --install build
 
-# Create virtual environment in the install directory for the python module.
-python3 -m venv --system-site-packages build/install/convexa
+rm -rf cpp/build
+cmake -S cpp -B cpp/build -DCMAKE_PREFIX_PATH=$(pwd)/build/install/ && \
+cmake --build cpp/build -j $(nproc)  && \
+./cpp/build/my_project
 
-# install the python module into the virtual environment.
-source build/install/convexa/bin/activate
-export CMAKE_INSTALL_PREFIX=`pwd`/build/install
-export CMAKE_PREFIX_PATH=`pwd`/build/install
-export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/usr/local/lib/python3.10/dist-packages/pybind11 \
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:`pwd`/build/install/lib
-python -m pip install ./python
 
-# run test
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:`pwd`/build/install/lib
-python python/examples/precision_valid.py
-
-# Deactivate the virtual environment
-deactivate

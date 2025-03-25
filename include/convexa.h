@@ -18,13 +18,12 @@ constexpr float pi_f = 3.141592653589793238462643383279f;
 std::vector<double> host_convolve(const std::vector<double>& signal, const std::vector<double>& kernel);
 std::vector<std::complex<double>> host_dft(const std::vector<double>& signal);
 
-class Convexor;
 } //End namespace ConvExa
 
 namespace CXTiming
 {
 
-double host_convolve(const std::vector<double>& signal, const std::vector<double>& kernel, std::vector<double>& output);
-double host_dft(const std::vector<double>& signal, std::vector<std::complex<double>>& output);
+float host_convolve(const std::vector<double>& signal, const std::vector<double>& kernel, std::vector<double>& output);
+float host_dft(const std::vector<double>& signal, std::vector<std::complex<double>>& output);
 }
 

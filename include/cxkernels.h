@@ -34,5 +34,5 @@ namespace CXTiming
 {
     float device_convolve(const std::vector<double> &signal, const std::vector<double> &kernel, std::vector<double> &output);
     template< typename T = double >
-    float device_dft<T>(const std::vector<T> &signal, std::vector<std::complex<T>> result);
+    float device_dft(const std::vector<T> &signal, std::vector<std::complex<T>> result);
 }
