@@ -254,4 +254,14 @@ namespace HELP
     }
     template std::tuple<double, double> relative_error<std::complex<double>>(std::vector<std::complex<double>> actual, std::vector<std::complex<double>> reference);
     template std::tuple<double, double> relative_error<std::complex<float>>(std::vector<std::complex<float>> actual, std::vector<std::complex<float>> reference);
+
+    template <typename O, typename R>
+    std::vector<R> vec_cast(std::vector<O> original) {
+        std::vector<R> result;
+        for (O item : original) {
+            result.push_back((R)item);
+        }
+        return result;
+    }
+
 }

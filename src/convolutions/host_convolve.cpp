@@ -25,6 +25,7 @@ namespace ConvExa
     template std::vector<uint16_t> host_convolve(const std::vector<uint16_t> &signal, const std::vector<uint16_t> &kernel);
     template std::vector<int16_t> host_convolve(const std::vector<int16_t> &signal, const std::vector<int16_t> &kernel);
     template std::vector<double> host_convolve(const std::vector<double> &signal, const std::vector<double> &kernel);
+    template std::vector<float> host_convolve(const std::vector<float> &signal, const std::vector<float> &kernel);
 }
 template <typename T>
 float CXTiming::host_convolve(const std::vector<T> &signal, const std::vector<T> &kernel, std::vector<T> &output)
@@ -46,3 +47,4 @@ float CXTiming::host_convolve(const std::vector<T> &signal, const std::vector<T>
 template float CXTiming::host_convolve<uint16_t>(const std::vector<uint16_t> &signal, const std::vector<uint16_t> &kernel, std::vector<uint16_t> &output);
 template float CXTiming::host_convolve<int16_t>(const std::vector<int16_t> &signal, const std::vector<int16_t> &kernel, std::vector<int16_t> &output);
 template float CXTiming::host_convolve<double>(const std::vector<double> &signal, const std::vector<double> &kernel, std::vector<double> &output);
+template float CXTiming::host_convolve<float>(const std::vector<float> &signal, const std::vector<float> &kernel, std::vector<float> &output);

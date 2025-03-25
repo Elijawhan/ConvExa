@@ -73,5 +73,6 @@ float CXTiming::device_convolve(const std::vector<T> &signal, const std::vector<
 }
 
 template float CXTiming::device_convolve<double>(const std::vector<double>&, const std::vector<double>&, std::vector<double>&);
+template float CXTiming::device_convolve<float>(const std::vector<float>&, const std::vector<float>&, std::vector<float>&);
 template float CXTiming::device_convolve<uint16_t>(const std::vector<uint16_t>&, const std::vector<uint16_t>&, std::vector<uint16_t>&);
 template float CXTiming::device_convolve<int16_t>(const std::vector<int16_t>&, const std::vector<int16_t>&, std::vector<int16_t>&);
