@@ -41,10 +41,10 @@ namespace HELP
         else
             return 1;
     }
-    template <typename T>
+    template <typename T=double>
     void print_vec(std::vector<T> vec) {
         for (T i: vec) {
-            printf("%d ");
+            printf("%f ", i);
         }
         printf("\n");
     }
