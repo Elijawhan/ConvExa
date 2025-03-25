@@ -22,8 +22,8 @@ void c_main()
     std::vector<float> myResult_d;
     float base_convolve_d_timing = CXTiming::device_convolve(fdata, myKernel, myResult_d);
 
-    double re = std::get<0>(HELP::relative_error(myResult_d, myResult_h));
-    printf("Relative Error device basic: %f ", re);
+    double re = std::get<1>(HELP::relative_error(myResult_d, myResult_h));
+    printf("Absolute Error device basic: %f ", re);
     if (re < HELP::MAX_RELATIVE_ERROR)
         printf("PASS\n");
     else
