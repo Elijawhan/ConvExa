@@ -1,10 +1,9 @@
 #pragma once
 #include <cuda/std/complex>
+
+
 namespace ConvExa
 {
-    constexpr cuda::std::complex<double> j_d(0.0, 1.0);
-    constexpr cuda::std::complex<float> j_f(0.0, 1.0);
-
     template <typename T = double>
     void device_dft(const T *signal, const uint32_t length, cuda::std::complex<T> *result);
     void device_convolve(const double *signal, const double *kernel, double *out, uint32_t sN, uint32_t kN, uint32_t oN);
@@ -33,6 +32,5 @@ namespace ConvExa
 namespace CXTiming
 {
     float device_convolve(const std::vector<double> &signal, const std::vector<double> &kernel, std::vector<double> &output);
-    template< typename T = double >
-    float device_dft(const std::vector<T> &signal, std::vector<std::complex<T>> result);
+    float device_dft(const std::vector<double> &signal, std::vector<std::complex<double>> &result);
 }

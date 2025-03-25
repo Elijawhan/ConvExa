@@ -1,8 +1,10 @@
+#pragma once
+
 #include <vector>
 #include <fstream>
 #include <sstream>
 #include <iostream>
-
+#include <complex>
 namespace HELP
 {
     int tokenize_csv(
@@ -41,10 +43,17 @@ namespace HELP
         else
             return 1;
     }
-    template <typename T=double>
+    template <typename T = double>
     void print_vec(std::vector<T> vec) {
         for (T i: vec) {
             printf("%f ", i);
+        }
+        printf("\n");
+    }
+    template <typename T = std::complex<double>>
+    void print_vec_complex(std::vector<T> vec) {
+        for (T i: vec) {
+            printf("(%f, %f) ", i.real(), i.imag());
         }
         printf("\n");
     }
