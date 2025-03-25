@@ -33,7 +33,7 @@ float CXTiming::host_dft(const std::vector<double>& signal, std::vector<std::com
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     if (duration.count() > 0) {
-        return duration.count() * 1000.0;
+        return duration.count() / 1000.0;
     } else {
         return 0;
     }

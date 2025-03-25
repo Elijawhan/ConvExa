@@ -53,7 +53,7 @@ float CXTiming::device_dft(const std::vector<double> &signal, std::vector<std::c
 
     size_t byte_size_sig = length * sizeof(double);
     size_t byte_size_output = length * sizeof(std::complex<double>);
-    result.reserve(length);
+    result.resize(length);
 
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
