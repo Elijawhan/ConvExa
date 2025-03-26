@@ -100,7 +100,7 @@ void c_main() {
     double re  = std::sqrt(errorNorm / referenceNorm);
 
     printf("Relative Error device basic: %.8f ", re);
-    if (re < HELP::MAX_RELATIVE_ERROR)
+    if (re < HELP::MAX_RELATIVE_ERROR_FLOAT)
         printf("PASS\n");
     else
         printf("FAIL\n");

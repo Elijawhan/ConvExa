@@ -151,117 +151,61 @@ namespace HELP
         
     }
 
-    constexpr double MAX_RELATIVE_ERROR = 1e-5;
+    constexpr long double MAX_RELATIVE_ERROR_FLOAT = 1e-5;
+    constexpr long double MAX_RELATIVE_ERROR_DOUBLE = 1e-14;
     template <typename T>
-    std::tuple<double, double> relative_error(std::vector<T> actual, std::vector<T> reference)
+    long double relative_error(std::vector<T> computed_vec, std::vector<T> reference_vec)
     {
-        double max_error = 0.0, max_relative_error = 0.0;
-        double total_relative_error = 0.0, mean_relative_error = 0.0;
+        size_t length = computed_vec.size();
+        if (length != reference_vec.size())
+        {
+            throw std::runtime_error("Relative error inputs must be the same size.");
+        } 
+        long double error_norm = 0.0;
+        long double reference_norm = 0.0;
+        for (size_t idx = 0; idx < length; ++idx)
+        {
+            auto const &reference = reference_vec[idx];
+            auto const &computed = computed_vec[idx];
+            long double localError = reference - computed;
+            error_norm += localError * localError;
+            reference_norm += reference * reference;
+        }
+        long double rel_error  = std::sqrt(error_norm / reference_norm);
+        return rel_error;
+    }
 
-        size_t length = actual.size();
-        if (length != reference.size())
+    template <typename T>
+    long double relative_error(std::vector<std::complex<T>> computed_vec, std::vector<std::complex<T>> reference_vec)
+    {
+        size_t length = computed_vec.size();
+        if (length != reference_vec.size())
         {
             throw std::runtime_error("Relative error inputs must be the same size.");
         }
-
-        for (uint32_t i = 0; i < length; i++)
+        
+        long double error_norm = 0.0;
+        long double reference_norm = 0.0;
+        for (size_t idx = 0; idx < length; ++idx)
         {
-            double difference = static_cast<double>(actual[i]) - static_cast<double>(reference[i]);
-            double relative_diff = difference / static_cast<double>(reference[i]);
-            total_relative_error += relative_diff;
-
-            if (difference > max_error)
-                max_error = difference;
-            if (relative_diff > max_relative_error)
-                max_relative_error = relative_diff;
-            
+            auto const &reference_r = reference_vec[idx].real();
+            auto const &computed_r = computed_vec[idx].real();
+            auto const &reference_i = reference_vec[idx].imag();
+            auto const &computed_i = computed_vec[idx].imag();
+            long double local_error_r = (reference_r - computed_r);
+            long double local_error_i = (reference_i - computed_i);
+            error_norm += (local_error_r * local_error_r) + (local_error_i * local_error_i);
+            reference_norm += (reference_r * reference_r) + (reference_i * reference_i);
         }
-        mean_relative_error = total_relative_error / length;
-
-        return std::make_tuple(max_error, max_relative_error);
+        long double rel_error  = std::sqrt(error_norm / reference_norm);
+        return rel_error;
     }
-    template <>
-    std::tuple<double, double> relative_error(std::vector<std::complex<double>> actual, std::vector<std::complex<double>> reference)
-    {
-        double max_error = 0.0, max_relative_error = 0.0;
-        double total_relative_error = 0.0, mean_relative_error = 0.0;
-
-        size_t length = actual.size();
-        if (length != reference.size())
-        {
-            throw std::runtime_error("Relative error inputs must be the same size.");
-        }
-
-        for (uint32_t i = 0; i < length; i++)
-        {
-            double difference_r = actual[i].real() - reference[i].real();
-            double difference_i = actual[i].imag() - reference[i].imag();
-
-            double relative_diff_r = difference_r / reference[i].real();
-            double relative_diff_i = difference_i / reference[i].imag();
-
-            total_relative_error += relative_diff_r + relative_diff_i;
-
-            if (difference_r > max_error)
-                max_error = difference_r;
-            if (difference_i > max_error)
-                max_error = difference_i;
-
-            if (relative_diff_r > max_relative_error)
-                max_relative_error = relative_diff_r;
-            if (relative_diff_i > max_relative_error)
-                max_relative_error = relative_diff_i;
-            
-        }
-        mean_relative_error = total_relative_error / (length * 2);
-
-        return std::make_tuple(max_error, max_relative_error);
-    }
-    template <>
-    std::tuple<double, double> relative_error(std::vector<std::complex<float>> actual, std::vector<std::complex<float>> reference)
-    {
-        double max_error = 0.0, max_relative_error = 0.0;
-        double total_relative_error = 0.0, mean_relative_error = 0.0;
-
-        size_t length = actual.size();
-        if (length != reference.size())
-        {
-            throw std::runtime_error("Relative error inputs must be the same size.");
-        }
-
-        for (uint32_t i = 0; i < length; i++)
-        {
-            double difference_r = static_cast<double>(actual[i].real()) - static_cast<double>(reference[i].real());
-            double difference_i = static_cast<double>(actual[i].imag()) - static_cast<double>(reference[i].imag());
-
-            double relative_diff_r = difference_r / static_cast<double>(reference[i].real());
-            double relative_diff_i = difference_i / static_cast<double>(reference[i].imag());
-
-            total_relative_error += relative_diff_r + relative_diff_i;
-
-            if (difference_r > max_error)
-                max_error = difference_r;
-            if (difference_i > max_error)
-                max_error = difference_i;
-
-            if (relative_diff_r > max_relative_error)
-                max_relative_error = relative_diff_r;
-            if (relative_diff_i > max_relative_error)
-                max_relative_error = relative_diff_i;
-            
-        }
-        mean_relative_error = total_relative_error / (length * 2);
-
-        return std::make_tuple(max_error, max_relative_error);
-    }
-    template std::tuple<double, double> relative_error<std::complex<double>>(std::vector<std::complex<double>> actual, std::vector<std::complex<double>> reference);
-    template std::tuple<double, double> relative_error<std::complex<float>>(std::vector<std::complex<float>> actual, std::vector<std::complex<float>> reference);
 
     template <typename O, typename R>
     std::vector<R> vec_cast(std::vector<O> original) {
         std::vector<R> result;
         for (O item : original) {
-            result.push_back((R)item);
+            result.push_back(static_cast<R>(item));
         }
         return result;
     }
