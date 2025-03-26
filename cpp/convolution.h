@@ -1,9 +1,8 @@
 #include <convexa.h>
 #include <cxkernels.h>
 #include "helper.h"
-#define numRuns 10
-void c_main()
-{
+
+void c_main() {
     printf("\n******************************************\n");
     printf("Beginning Convolution Test:\n");
     std::vector<int16_t> data;

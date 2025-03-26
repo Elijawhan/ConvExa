@@ -8,6 +8,8 @@
 #include <cstdlib>
 #include <type_traits>
 #include <tuple>
+#define numRuns 10
+
 namespace HELP
 {
     // WAV header information.
@@ -91,7 +93,7 @@ namespace HELP
         printf("\n");
     }
 
-    wav_hdr read_wav(char * fin, std::vector<int16_t>* out) {
+    wav_hdr read_wav(const char * fin, std::vector<int16_t>* out) {
         FILE* input;
         wav_hdr hdr;
         try {
@@ -130,7 +132,7 @@ namespace HELP
         }
         return hdr;
     }
-    void write_wav(char * fout,const  std::vector<int16_t>& in, wav_hdr wav_details) {
+    void write_wav(const char * fout,const  std::vector<int16_t>& in, wav_hdr wav_details) {
         FILE* output;
         try {
         
@@ -200,10 +202,10 @@ namespace HELP
 
             total_relative_error += relative_diff_r + relative_diff_i;
 
-            if (relative_diff_r > max_error)
-                max_error = relative_diff_r;
-            if (relative_diff_i > max_error)
-                max_error = relative_diff_i;
+            if (difference_r > max_error)
+                max_error = difference_r;
+            if (difference_i > max_error)
+                max_error = difference_i;
 
             if (relative_diff_r > max_relative_error)
                 max_relative_error = relative_diff_r;
@@ -237,10 +239,10 @@ namespace HELP
 
             total_relative_error += relative_diff_r + relative_diff_i;
 
-            if (relative_diff_r > max_error)
-                max_error = relative_diff_r;
-            if (relative_diff_i > max_error)
-                max_error = relative_diff_i;
+            if (difference_r > max_error)
+                max_error = difference_r;
+            if (difference_i > max_error)
+                max_error = difference_i;
 
             if (relative_diff_r > max_relative_error)
                 max_relative_error = relative_diff_r;
