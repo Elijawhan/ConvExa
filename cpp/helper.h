@@ -153,10 +153,11 @@ namespace HELP
 
     constexpr long double MAX_RELATIVE_ERROR_FLOAT = 1e-5;
     constexpr long double MAX_RELATIVE_ERROR_DOUBLE = 1e-14;
+    // MAKE SURE TO CHANGE BOTH TEMPLATES
     template <typename T>
     long double relative_error(std::vector<T> computed_vec, std::vector<T> reference_vec)
     {
-        //printf("Size of long double: %d, bytes\n", sizeof(long double));
+        //printf("Size of long double: %d-bit\n", sizeof(long double) * 8);
         size_t length = computed_vec.size();
         if (length != reference_vec.size())
         {
