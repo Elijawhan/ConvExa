@@ -6,30 +6,38 @@
 
 namespace CXKernels
 {
-    __device__ constexpr cuda::std::complex<double> j_d(0.0, 1.0);
-    __device__ constexpr cuda::std::complex<float> j_f(0.0, 1.0);
-    __device__ constexpr double pi_d = 3.141592653589793238462643383279;
-    __device__ constexpr float pi_f = 3.141592653589793238462643383279f;
+// Device-side constants used in DFT 
+__device__ constexpr cuda::std::complex<double> j_d(0.0, 1.0);
+__device__ constexpr cuda::std::complex<float> j_f(0.0, 1.0);
+__device__ constexpr double pi_d = 3.141592653589793238462643383279;
+__device__ constexpr float pi_f = 3.141592653589793238462643383279f;
 
 template <typename T>
 __global__ void device_dft(const T* signal, const size_t length, cuda::std::complex<T>* result)
 {
+    // Grid-stride over the signal. Each thread receives its own DFT component.
     for (uint32_t index = blockDim.x*blockIdx.x + threadIdx.x;
          index < length;
          index += blockDim.x * gridDim.x)
     {
+        // Thread calculates local sum
         cuda::std::complex<T> sum(0.0, 0.0);
         for (uint32_t i = 0; i < length; i++)
         {
+            // Use CUDA Std Lib to create complex component
             cuda::std::complex<T> exponential = cuda::std::exp(
                 -(j_d * 2.0 * pi_d * 
                  static_cast<T>(index) * static_cast<T>(i) / static_cast<T>(length))
             );
+            // Add to sum
             sum += static_cast<cuda::std::complex<T>>(signal[i]) * exponential;
         }
+        // Store sum back into result
         result[index] = sum;
     }
 }
+// Explicit float template specialization 
+// (originally wanted to call cuda::std::expf, but expf does not accept complex inputs)
 template <>
 __global__ void device_dft(const float* signal, const size_t length, cuda::std::complex<float>* result)
 {

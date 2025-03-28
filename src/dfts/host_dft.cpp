@@ -5,21 +5,26 @@ namespace ConvExa
 template <typename T>
 std::vector<std::complex<T>> host_dft(const std::vector<T> &signal)
 {
+    // Slight optimization, pre-reserve the size of the result
     size_t N = signal.size();
     std::vector<std::complex<T>> result;
     result.reserve(N);
-    
+    // For each FFT component
     for (int idx = 0; idx < static_cast<int>(N); idx++)
     {
+        // For each signal element
         result.push_back({0.0, 0.0});
         for (int jdx = 0; jdx < static_cast<int>(N); jdx++)
         {
+            // Generate complex number
             std::complex<T> exponential = std::exp(
                 -(ConvExa::j * 2.0 * ConvExa::pi * static_cast<T>(idx) * static_cast<T>(jdx) 
                 / static_cast<T>(N))    
             );
+            // Append to the last element on the vector
             result.back() += static_cast<std::complex<T>>(signal[jdx]) * exponential;
         }
+        // Summation is complete, move on to next FFT component
     }
     return result;
 }
