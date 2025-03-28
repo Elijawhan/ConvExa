@@ -156,6 +156,7 @@ namespace HELP
     template <typename T>
     long double relative_error(std::vector<T> computed_vec, std::vector<T> reference_vec)
     {
+        //printf("Size of long double: %d, bytes\n", sizeof(long double));
         size_t length = computed_vec.size();
         if (length != reference_vec.size())
         {
@@ -178,6 +179,7 @@ namespace HELP
     template <typename T>
     long double relative_error(std::vector<std::complex<T>> computed_vec, std::vector<std::complex<T>> reference_vec)
     {
+        //printf("Size of long double: %d-bit\n", sizeof(long double) * 8);
         size_t length = computed_vec.size();
         if (length != reference_vec.size())
         {
