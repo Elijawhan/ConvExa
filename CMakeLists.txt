@@ -12,6 +12,7 @@ add_library(convexa
   src/convolutions/device_convolve.cu
   src/dfts/host_dft.cpp
   src/dfts/device_dft.cu
+  src/dfts/device_fft_radix2.cu
 )
 
 target_link_libraries(convexa PRIVATE CUDA::cudart)

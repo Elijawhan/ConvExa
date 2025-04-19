@@ -5,6 +5,12 @@
 
 namespace CXKernels
 {
+
+// Device-side constants used in DFT
+// Try moving to constant memory?
+__device__ constexpr cuda::std::complex<double> j_d(0.0, 1.0);
+__device__ constexpr cuda::std::complex<float> j_f(0.0, 1.0);
+
 template <typename T>
 __global__ void device_dft(const T* signal, const size_t length, cuda::std::complex<T>* result)
 {
