@@ -6,7 +6,7 @@ void c_main() {
     printf("\n******************************************\n");
     printf("Beginning Convolution Test:\n");
     std::vector<int16_t> data;
-    HELP::wav_hdr hdr = HELP::read_wav("./cpp/audio/badadeedur.wav", &data);
+    HELP::wav_hdr hdr = HELP::read_wav("./cpp/audio/subroutines.wav", &data);
     std::vector<float> fdata = HELP::vec_cast<int16_t, float>(data);
     // Filter Design software used: http://t-filter.engineerjs.com
     std::vector<float> myKernel = {0.005184042182695352, 0.00048479825762196997, 0.0005061197474262169, 0.0005270715548515555, 0.0005475890126449697,

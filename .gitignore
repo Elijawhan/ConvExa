@@ -12,3 +12,5 @@ build
 __pycache__
 *.qsub_out
 *.wav
+*.nsys-rep
+*.ncu-rep
