@@ -103,15 +103,17 @@ std::vector<std::vector<T>> ConvExa::batch_convolution(const std::vector<std::ve
     std::vector<T*> device_results;
     std::vector<cudaStream_t> streams;
 
+    T* d_signal = nullptr,* d_kernel = nullptr,* d_result = nullptr;
     // Load the memory
     for (uint32_t idx = 0; idx < signals.size(); idx++)
     {
+        d_signal = nullptr; d_kernel = nullptr; d_result = nullptr;
+        
         uint32_t sig_length = signals[idx].size();
         uint32_t sig_size = sig_length * sizeof(T);
         uint32_t ker_length = kernels[idx].size();
         uint32_t ker_size = ker_length * sizeof(T);
         uint32_t result_size = (sig_length + ker_length - 1) * sizeof(T);
-        T* d_signal = nullptr, d_kernel = nullptr, d_result = nullptr;
 
         checkCudaErrors(cudaMalloc(&d_signal, sig_size));
         checkCudaErrors(cudaMalloc(&d_kernel, ker_size));
@@ -154,8 +156,12 @@ std::vector<std::vector<T>> ConvExa::batch_convolution(const std::vector<std::ve
     {
         uint32_t sig_length = signals[idx].size();
         uint32_t ker_length = kernels[idx].size();
-        uint32_t result_size = (sig_length + ker_length - 1) * sizeof(T);
+        uint32_t result_length = (sig_length + ker_length - 1);
+        uint32_t result_size = result_length * sizeof(T);
         
+        std::vector<T> result; 
+        result.resize(result_length);
+        results.push_back(result);
         // Wait for convolution to complete
         checkCudaErrors(cudaStreamSynchronize(streams[idx]));
         checkCudaErrors(cudaMemcpyAsync(results[idx].data(), device_results[idx], result_size,
@@ -167,3 +173,4 @@ std::vector<std::vector<T>> ConvExa::batch_convolution(const std::vector<std::ve
     checkCudaErrors(cudaDeviceSynchronize());
     return results;
 }
+template std::vector<std::vector<float>> ConvExa::batch_convolution(const std::vector<std::vector<float>> &signals, const std::vector<std::vector<float>> &kernels);

@@ -12,8 +12,6 @@ namespace ConvExa
 
     void device_convolve(const double *signal, const double *kernel, double *out, uint32_t sN, uint32_t kN, uint32_t oN);
 
-    template <typename T>
-    std::vector<std::vector<T>> batch_convolution(const std::vector<std::vector<T>> &signals, const std::vector<std::vector<T>> &kernels);
 
     template <typename T>
     class Convexor

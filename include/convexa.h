@@ -21,6 +21,10 @@ namespace ConvExa
     template <typename T>
     std::vector<std::complex<T>> host_dft(const std::vector<T>& signal);
 
+    template <typename T>
+    std::vector<std::vector<T>> batch_convolution(const std::vector<std::vector<T>> &signals, const std::vector<std::vector<T>> &kernels);
+
+
     
 
 } //End namespace ConvExa
