@@ -1,5 +1,5 @@
 #pragma once
-
+#include <cxkernels.h>
 #include <vector>
 #include <complex>
 #include <cmath>
@@ -20,6 +20,8 @@ namespace ConvExa
     std::vector<T> host_convolve(const std::vector<T>& signal, const std::vector<T>& kernel);
     template <typename T>
     std::vector<std::complex<T>> host_dft(const std::vector<T>& signal);
+
+    
 
 } //End namespace ConvExa
 

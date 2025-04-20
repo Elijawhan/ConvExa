@@ -3,6 +3,7 @@
 #include <cuda_runtime.h>
 #include <helper_cuda.h>
 #include <iostream>
+#include <helper.h>
 namespace CXKernels
 {
 template <typename T>
@@ -36,54 +37,6 @@ __global__ void radix2_preprocess(const T* signal, const size_t length, cuda::st
         result[index] = cuda::std::complex<T>(signal[reverse], 0);
     }
 }
-/*
-template <typename T>
-__global__ void device_fft_radix2_read(cuda::std::complex<T>* result, const size_t length, cuda::std::complex<T>* temp_result1, cuda::std::complex<T>* temp_result2, uint32_t step)
-{
-    uint32_t index = blockDim.x*blockIdx.x + threadIdx.x;
-    // Size of the butterfly (2^idx)
-    uint32_t block = 1 << step;
-    // Number of elements to butterfly
-    uint32_t half = block >> 1;
-    uint32_t group = index / block;
-    uint32_t start = group * block;
-    uint32_t rel_pos = index % half;
-
-    // Typically, kdx == index, but this may not be true later on, so we calculate it
-    uint32_t kdx = start + rel_pos;
-    if (kdx < length)
-    {
-        // N = block (size of butterfly group)
-        // k = idx % block (index within that group)
-        cuda::std::complex<T> twiddle = twiddle_factor<T>(rel_pos, block);
-        //printf("For a REL_POS = %d, and BLOCK_WIDTH = %d, the twiddle was: (%f, %f)\n", rel_pos, block, twiddle.real(), twiddle.imag());
-        temp_result1[kdx] = result[kdx];
-        temp_result2[kdx] = twiddle * result[kdx + half];
-    }
-}
-template <typename T>
-__global__ void device_fft_radix2_write(cuda::std::complex<T>* result, const size_t length, cuda::std::complex<T>* temp_result1, cuda::std::complex<T>* temp_result2, uint32_t step)
-{
-    uint32_t index = blockDim.x*blockIdx.x + threadIdx.x;
-    // Size of the butterfly (2^idx)
-    uint32_t block = 1 << step;
-    // Number of elements to butterfly
-    uint32_t half = block >> 1;
-    uint32_t group = index / block;
-    uint32_t start = group * block;
-    uint32_t rel_pos = index % half;
-
-    // Typically, kdx == index, but this may not be true later on, so we calculate it
-    uint32_t kdx = start + rel_pos;
-    if (kdx < length)
-    {
-        result[kdx] = temp_result1[kdx] + temp_result2[kdx];
-        result[kdx + half] = temp_result1[kdx] - temp_result2[kdx];
-        //printf("Front: Wrote (%f, %f) to %d.\n", result[kdx].real(), result[kdx].imag(), kdx);
-        //printf("Back: Wrote (%f, %f) to %d.\n", result[kdx + half].real(), result[kdx + half].imag(), kdx);
-    }
-}
-*/
 
 
 template <typename T>
@@ -105,7 +58,6 @@ __global__ void device_fft_radix2_read(cuda::std::complex<T>* result, const size
         // N = block (size of butterfly group)
         // k = idx % block (index within that group)
         cuda::std::complex<T> twiddle = twiddle_factor<T>(rel_pos, block);
-        //printf("For a REL_POS = %d, and BLOCK_WIDTH = %d, the twiddle was: (%f, %f)\n", rel_pos, block, twiddle.real(), twiddle.imag());
         temp_result[kdx] = result[kdx];
         temp_result[kdx + half] = twiddle * result[kdx + half];
     }
@@ -128,8 +80,6 @@ __global__ void device_fft_radix2_write(cuda::std::complex<T>* result, const siz
     {
         result[kdx] = temp_result[kdx] + temp_result[kdx + half];
         result[kdx + half] = temp_result[kdx] - temp_result[kdx + half];
-        //printf("Front: Wrote (%f, %f) to %d.\n", result[kdx].real(), result[kdx].imag(), kdx);
-        //printf("Back: Wrote (%f, %f) to %d.\n", result[kdx + half].real(), result[kdx + half].imag(), kdx);
     }
 }
 }
@@ -172,11 +122,11 @@ float CXTiming::device_fft_radix2(const std::vector<T> &signal, std::vector<std:
         for (int step = 1; step <= num_stages; step++)
         {
             CXKernels::device_fft_radix2_read<<<num_blocks, num_threads>>>(
-                device_c, length, device_temp1/*, device_temp2*/, step
+                device_c, length, device_temp1, step
             );
             //cudaDeviceSynchronize();
             CXKernels::device_fft_radix2_write<<<num_blocks, num_threads>>>(
-                device_c, length, device_temp1/*, device_temp2*/, step
+                device_c, length, device_temp1, step
             );
             cudaDeviceSynchronize();
         }

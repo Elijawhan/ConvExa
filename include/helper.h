@@ -8,7 +8,7 @@
 #include <cstdlib>
 #include <type_traits>
 #include <tuple>
-#define numRuns 1
+#define numRuns 10
 
 namespace HELP
 {

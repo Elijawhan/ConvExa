@@ -5,7 +5,7 @@
 #define BLOCK_LEN 1024
 namespace CXKernels
 {
-    template <typename T = double>
+    template <typename T>
     __global__ void overlap_save_full_convolve(T *A, T *B, T *C, unsigned int aN, unsigned int bN, unsigned int cN)
     {
         extern __shared__ __align__(sizeof(T)) unsigned char my_smem[];
@@ -36,7 +36,7 @@ namespace CXKernels
         }
     }
 }
-template <typename T = double>
+template <typename T>
 float CXTiming::device_convolve_overlap_save(const std::vector<T> &signal, const std::vector<T> &kernel, std::vector<T> &output)
 {
     T *device_a = nullptr;
@@ -93,3 +93,77 @@ template float CXTiming::device_convolve_overlap_save<double>(const std::vector<
 template float CXTiming::device_convolve_overlap_save<float>(const std::vector<float> &, const std::vector<float> &, std::vector<float> &);
 // template float CXTiming::device_convolve_overlap_add<uint16_t>(const std::vector<uint16_t>&, const std::vector<uint16_t>&, std::vector<uint16_t>&);
 // template float CXTiming::device_convolve_overlap_add<int16_t>(const std::vector<int16_t>&, const std::vector<int16_t>&, std::vector<int16_t>&);
+
+template <typename T>
+std::vector<std::vector<T>> ConvExa::batch_convolution(const std::vector<std::vector<T>> &signals, const std::vector<std::vector<T>> &kernels)
+{
+    std::vector<std::vector<T>> results;
+    std::vector<T*> device_signals;
+    std::vector<T*> device_kernels;
+    std::vector<T*> device_results;
+    std::vector<cudaStream_t> streams;
+
+    // Load the memory
+    for (uint32_t idx = 0; idx < signals.size(); idx++)
+    {
+        uint32_t sig_length = signals[idx].size();
+        uint32_t sig_size = sig_length * sizeof(T);
+        uint32_t ker_length = kernels[idx].size();
+        uint32_t ker_size = ker_length * sizeof(T);
+        uint32_t result_size = (sig_length + ker_length - 1) * sizeof(T);
+        T* d_signal = nullptr, d_kernel = nullptr, d_result = nullptr;
+
+        checkCudaErrors(cudaMalloc(&d_signal, sig_size));
+        checkCudaErrors(cudaMalloc(&d_kernel, ker_size));
+        checkCudaErrors(cudaMalloc(&d_result, result_size));
+
+        cudaStream_t stream{0};
+        checkCudaErrors(cudaStreamCreate(&stream));
+        checkCudaErrors(cudaMemcpyAsync(d_signal, signals[idx].data(), sig_size,
+                        cudaMemcpyHostToDevice, stream));
+        checkCudaErrors(cudaMemcpyAsync(d_kernel, kernels[idx].data(), ker_size,
+                        cudaMemcpyHostToDevice, stream));
+
+        streams.push_back(stream);
+        device_signals.push_back(d_signal);
+        device_kernels.push_back(d_kernel);
+        device_results.push_back(d_result);
+    }
+
+    for (uint32_t idx = 0; idx < signals.size(); idx++)
+    {
+        uint32_t sig_length = signals[idx].size();
+        uint32_t ker_length = kernels[idx].size();
+        uint32_t result_length = (sig_length + ker_length - 1);
+
+        dim3 blockSize(1024);
+        int blocks = sig_length / blockSize.x + 1;
+        dim3 gridSize(blocks);
+        size_t shmem = (1024 + ker_length) * sizeof(T);
+        // Wait for memcpy to complete
+        checkCudaErrors(cudaStreamSynchronize(streams[idx]));
+
+        /* Fire off the Convolution */
+        CXKernels::overlap_save_full_convolve<T> <<<gridSize, blockSize, shmem, streams[idx]>>> (
+            device_signals[idx], device_kernels[idx], device_results[idx], 
+            sig_length, ker_length, result_length
+        );
+    }
+
+    for (uint32_t idx = 0; idx < signals.size(); idx++)
+    {
+        uint32_t sig_length = signals[idx].size();
+        uint32_t ker_length = kernels[idx].size();
+        uint32_t result_size = (sig_length + ker_length - 1) * sizeof(T);
+        
+        // Wait for convolution to complete
+        checkCudaErrors(cudaStreamSynchronize(streams[idx]));
+        checkCudaErrors(cudaMemcpyAsync(results[idx].data(), device_results[idx], result_size,
+                        cudaMemcpyDeviceToHost, streams[idx]));
+
+        // Memory copy is complete
+        checkCudaErrors(cudaStreamSynchronize(streams[idx]));
+    }
+    checkCudaErrors(cudaDeviceSynchronize());
+    return results;
+}
