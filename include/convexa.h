@@ -29,5 +29,7 @@ namespace CXTiming
     float host_convolve(const std::vector<T>& signal, const std::vector<T>& kernel, std::vector<T>& output);
     template <typename T>
     float host_dft(const std::vector<T>& signal, std::vector<std::complex<T>>& output);
+    template <typename T>
+    float host_fft_radix2(const std::vector<T>& signal, std::vector<std::complex<T>>& output);
 }
 

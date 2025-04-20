@@ -2,61 +2,136 @@
 #include <cxkernels.h>
 #include <cuda_runtime.h>
 #include <helper_cuda.h>
-
+#include <iostream>
 namespace CXKernels
 {
 template <typename T>
-__device__ inline cuda::std::complex<T> twiddle_factor(int32_t k, size_t N) 
+__device__ inline cuda::std::complex<T> twiddle_factor(int32_t k, int32_t N) 
 {
     T angle = -2.0 * CUDART_PI * k / static_cast<T>(N);
-    return cuda::std::complex<T>(cuda::std::cos(angle), cuda::std::sin(angle));
+    T s, c;
+    sincos(angle, &s, &c);
+    return cuda::std::complex<T>(c, s);
+}
+
+__device__ inline uint32_t reverse_bits(uint32_t x)
+{
+    x = ((x & 0xaaaaaaaa) >> 1) | ((x & 0x55555555) << 1);
+    x = ((x & 0xcccccccc) >> 2) | ((x & 0x33333333) << 2);
+    x = ((x & 0xf0f0f0f0) >> 4) | ((x & 0x0f0f0f0f) << 4);
+    x = ((x & 0xff00ff00) >> 8) | ((x & 0x00ff00ff) << 8);
+    return (x >> 16) | (x << 16);/**/
 }
 
 template <typename T>
-__global__ void device_fft_radix2(const T* signal, const size_t length, cuda::std::complex<T>* result)
+__global__ void radix2_preprocess(const T* signal, const size_t length, cuda::std::complex<T>* result)
 {
     uint32_t index = blockDim.x*blockIdx.x + threadIdx.x;
-
-    // Load the real part into the result 
-    for (uint32_t i = 0; i < length; i += blockDim.x*gridDim.x)
-        result[i] = cuda::std::complex<T>(signal[i], 0);
-    __syncthreads();
-
-    // In-place FFT
-    for (uint32_t idx = 1; idx <= log2f(static_cast<float>(length)); idx++)
+    uint32_t reverse;
+    uint32_t logN = log2f(static_cast<float>(length));
+    for (int i = index; i < length; i += blockDim.x*gridDim.x)
     {
-        // Size of the butterfly (2^idx)
-        int32_t block = 1 << idx;
-        // Number of elements to butterfly
-        int32_t half = block >> 1;
-
-        // Grid-stride over the FFT in case it is too large
-        for (uint32_t jdx = index; jdx < length; jdx += blockDim.x*gridDim.x)
-        {
-            uint32_t group = jdx / block;
-            uint32_t start = group * block;
-            uint32_t rel_pos = jdx & block;
-
-            // Typically, kdx == index, but this may not be true later on, so we calculate it
-            uint32_t kdx = start + rel_pos;
-
-            // Only work on half of the elements
-            if (rel_pos < half)
-            {
-                // N = block (size of butterfly group)
-                // k = idx % block (index within that group)
-                cuda::std::complex<T> twiddle = twiddle_factor<T>(rel_pos, block);
-
-                cuda::std::complex<T> real = result[kdx];
-                cuda::std::complex<T> imag = twiddle * result[kdx + half];
-                result[kdx] = real + imag;
-                result[kdx + half] = real = imag;
-            }
-        }
-        __syncthreads();
+        reverse = reverse_bits(i);
+        reverse >>= (32 - logN);
+        result[index] = cuda::std::complex<T>(signal[reverse], 0);
     }
 }
+/*
+template <typename T>
+__global__ void device_fft_radix2_read(cuda::std::complex<T>* result, const size_t length, cuda::std::complex<T>* temp_result1, cuda::std::complex<T>* temp_result2, uint32_t step)
+{
+    uint32_t index = blockDim.x*blockIdx.x + threadIdx.x;
+    // Size of the butterfly (2^idx)
+    uint32_t block = 1 << step;
+    // Number of elements to butterfly
+    uint32_t half = block >> 1;
+    uint32_t group = index / block;
+    uint32_t start = group * block;
+    uint32_t rel_pos = index % half;
 
+    // Typically, kdx == index, but this may not be true later on, so we calculate it
+    uint32_t kdx = start + rel_pos;
+    if (kdx < length)
+    {
+        // N = block (size of butterfly group)
+        // k = idx % block (index within that group)
+        cuda::std::complex<T> twiddle = twiddle_factor<T>(rel_pos, block);
+        //printf("For a REL_POS = %d, and BLOCK_WIDTH = %d, the twiddle was: (%f, %f)\n", rel_pos, block, twiddle.real(), twiddle.imag());
+        temp_result1[kdx] = result[kdx];
+        temp_result2[kdx] = twiddle * result[kdx + half];
+    }
+}
+template <typename T>
+__global__ void device_fft_radix2_write(cuda::std::complex<T>* result, const size_t length, cuda::std::complex<T>* temp_result1, cuda::std::complex<T>* temp_result2, uint32_t step)
+{
+    uint32_t index = blockDim.x*blockIdx.x + threadIdx.x;
+    // Size of the butterfly (2^idx)
+    uint32_t block = 1 << step;
+    // Number of elements to butterfly
+    uint32_t half = block >> 1;
+    uint32_t group = index / block;
+    uint32_t start = group * block;
+    uint32_t rel_pos = index % half;
+
+    // Typically, kdx == index, but this may not be true later on, so we calculate it
+    uint32_t kdx = start + rel_pos;
+    if (kdx < length)
+    {
+        result[kdx] = temp_result1[kdx] + temp_result2[kdx];
+        result[kdx + half] = temp_result1[kdx] - temp_result2[kdx];
+        //printf("Front: Wrote (%f, %f) to %d.\n", result[kdx].real(), result[kdx].imag(), kdx);
+        //printf("Back: Wrote (%f, %f) to %d.\n", result[kdx + half].real(), result[kdx + half].imag(), kdx);
+    }
+}
+*/
+
+
+template <typename T>
+__global__ void device_fft_radix2_read(cuda::std::complex<T>* result, const size_t length, cuda::std::complex<T>* temp_result, uint32_t step)
+{
+    uint32_t index = blockDim.x*blockIdx.x + threadIdx.x;
+    // Size of the butterfly (2^idx)
+    uint32_t block = 1 << step;
+    // Number of elements to butterfly
+    uint32_t half = block >> 1;
+    uint32_t group = index / half;
+    uint32_t start = group * block;
+    uint32_t rel_pos = index % half;
+
+    // Typically, kdx == index, but this may not be true later on, so we calculate it
+    uint32_t kdx = start + rel_pos;
+    if (kdx < length)
+    {
+        // N = block (size of butterfly group)
+        // k = idx % block (index within that group)
+        cuda::std::complex<T> twiddle = twiddle_factor<T>(rel_pos, block);
+        //printf("For a REL_POS = %d, and BLOCK_WIDTH = %d, the twiddle was: (%f, %f)\n", rel_pos, block, twiddle.real(), twiddle.imag());
+        temp_result[kdx] = result[kdx];
+        temp_result[kdx + half] = twiddle * result[kdx + half];
+    }
+}
+template <typename T>
+__global__ void device_fft_radix2_write(cuda::std::complex<T>* result, const size_t length, cuda::std::complex<T>* temp_result, uint32_t step)
+{
+    uint32_t index = blockDim.x*blockIdx.x + threadIdx.x;
+    // Size of the butterfly (2^idx)
+    uint32_t block = 1 << step;
+    // Number of elements to butterfly
+    uint32_t half = block >> 1;
+    uint32_t group = index / half;
+    uint32_t start = group * block;
+    uint32_t rel_pos = index % half;
+
+    // Typically, kdx == index, but this may not be true later on, so we calculate it
+    uint32_t kdx = start + rel_pos;
+    if (kdx < length)
+    {
+        result[kdx] = temp_result[kdx] + temp_result[kdx + half];
+        result[kdx + half] = temp_result[kdx] - temp_result[kdx + half];
+        //printf("Front: Wrote (%f, %f) to %d.\n", result[kdx].real(), result[kdx].imag(), kdx);
+        //printf("Back: Wrote (%f, %f) to %d.\n", result[kdx + half].real(), result[kdx + half].imag(), kdx);
+    }
+}
 }
 
 template <typename T>
@@ -64,6 +139,8 @@ float CXTiming::device_fft_radix2(const std::vector<T> &signal, std::vector<std:
 {
     T* device_a = nullptr;
     cuda::std::complex<T>* device_c = nullptr;
+    cuda::std::complex<T>* device_temp1 = nullptr;
+    cuda::std::complex<T>* device_temp2 = nullptr;
     uint32_t length = signal.size();
 
     size_t byte_size_sig = length * sizeof(T);
@@ -78,26 +155,44 @@ float CXTiming::device_fft_radix2(const std::vector<T> &signal, std::vector<std:
     checkCudaErrors(cudaMemcpy(device_a, signal.data(), byte_size_sig, cudaMemcpyHostToDevice));
 
     checkCudaErrors(cudaMalloc(&device_c, byte_size_output));
+    checkCudaErrors(cudaMalloc(&device_temp1, byte_size_output));
+    checkCudaErrors(cudaMalloc(&device_temp2, byte_size_output));
 
     dim3 num_threads = 1024;
     dim3 num_blocks = (length + num_threads.x - 1) / num_threads.x;
-    cudaEventRecord(start);
-    // Memory Loaded, Perform Computations...
-    CXKernels::device_fft_radix2<<<num_blocks, num_threads>>>(
-        device_a, length, device_c
-    );
-    cudaEventRecord(stop);
 
+    int num_stages = log2f(length);
+    
+    if (length > 1)
+    {
+        cudaEventRecord(start);
+        CXKernels::radix2_preprocess<<<num_blocks, num_threads>>>(
+            device_a, length, device_c
+        );
+        for (int step = 1; step <= num_stages; step++)
+        {
+            CXKernels::device_fft_radix2_read<<<num_blocks, num_threads>>>(
+                device_c, length, device_temp1/*, device_temp2*/, step
+            );
+            //cudaDeviceSynchronize();
+            CXKernels::device_fft_radix2_write<<<num_blocks, num_threads>>>(
+                device_c, length, device_temp1/*, device_temp2*/, step
+            );
+            cudaDeviceSynchronize();
+        }
+        cudaEventRecord(stop);
+    }
+    cudaEventSynchronize(stop);
     // Finish Computations before this block
     checkCudaErrors(cudaMemcpy(result.data(), device_c, byte_size_output, cudaMemcpyDeviceToHost));
 
-    cudaEventSynchronize(stop);
     float milliseconds = 0;
     cudaEventElapsedTime(&milliseconds, start, stop);
 
     checkCudaErrors(cudaFree(device_a));
     checkCudaErrors(cudaFree(device_c));
-
+    checkCudaErrors(cudaFree(device_temp1));
+    checkCudaErrors(cudaFree(device_temp2));
     return milliseconds;
 }
 template float CXTiming::device_fft_radix2<double>(const std::vector<double> &signal, std::vector<std::complex<double>> &result);

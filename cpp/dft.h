@@ -3,11 +3,19 @@
 #include <cxkernels.h>
 #include <algorithm>
 #include <random>
+#include <functional>
 #include "helper.h"
+
+template< typename T >
+void test_dft_kernel(std::function< float (const std::vector<T>&, std::vector<std::complex<T>>&) > test_func,
+                     std::function< float (const std::vector<T>&, std::vector<std::complex<T>>&) > reference_func,
+                     const std::vector<T> &stimulus, long double max_error);
+
+
 void d_main() 
 {
     printf("\n******************************************\n");
-    printf("Beginning DFT Test:\n");
+    printf("Beginning Fourier Transform Testing..\n");
     std::vector<int16_t> myVec_int;
     std::vector<double> myVec;
     std::vector<float> myVecf;
@@ -34,101 +42,89 @@ void d_main()
     
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_real_distribution<double> dist(1.0, 10000.0);
-    for (int i = 0; i < 1000; i++)
+    std::uniform_real_distribution<double> dist(1.0, 10000000.0);
+    for (int i = 1; i < 9; i++)
     {
-        myVec.push_back(dist(gen));
-        myVecf.push_back(static_cast<float>(myVec.back()));
-        //myVec.push_back(static_cast<double>(i));
-        //myVecf.push_back(static_cast<float>(i));
+        //myVec.push_back(dist(gen));
+        //myVecf.push_back(static_cast<float>(myVec.back()));
+        myVec.push_back(static_cast<double>(i)*100000);
+        myVecf.push_back(static_cast<float>(i)*100000);
     }
     
     printf("Size of input vectors: %d\n", myVec.size());
+    std::cout << "==================== " << "FP64" << " ====================" << std::endl;
+    /*
+    std::cout << "TESTING DFT:" << std::endl;
+    test_dft_kernel<double>(
+        static_cast<std::function< float (const std::vector<double>&, std::vector<std::complex<double>>&) >>(CXTiming::device_dft<double>),
+        static_cast<std::function< float (const std::vector<double>&, std::vector<std::complex<double>>&) >>(CXTiming::host_dft<double>),
+        myVec, HELP::MAX_RELATIVE_ERROR_DOUBLE
+    );
+    std::cout << std::endl;
+    */
+    std::cout << "TESTING FFT RADIX2:" << std::endl;
+    test_dft_kernel<double>(
+        static_cast<std::function< float (const std::vector<double>&, std::vector<std::complex<double>>&) >>(CXTiming::device_fft_radix2<double>),
+        static_cast<std::function< float (const std::vector<double>&, std::vector<std::complex<double>>&) >>(CXTiming::host_fft_radix2<double>),
+        myVec, HELP::MAX_RELATIVE_ERROR_DOUBLE
+    );
+    std::cout << std::endl;
+    
+    std::cout << std::endl;
+    std::cout << "==================== " << "FP32" << " ====================" << std::endl;
+    /*
+    std::cout << "TESTING DFT:" << std::endl;
+    test_dft_kernel<float>(
+        static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::device_dft<float>),
+        static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::host_dft<float>),
+        myVecf, HELP::MAX_RELATIVE_ERROR_FLOAT
+    );
+    std::cout << std::endl;
+    */
+    std::cout << "TESTING FFT RADIX2:" << std::endl;
+    test_dft_kernel<float>(
+        static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::device_fft_radix2<float>),
+        static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::host_fft_radix2<float>),
+        myVecf, HELP::MAX_RELATIVE_ERROR_FLOAT
+    );
+    std::cout << std::endl;
+}
 
-    std::vector<std::complex<double>> result;
-    std::vector<std::complex<float>> resultf;
-    std::vector<std::complex<double>> result_kernel;
-    std::vector<std::complex<float>> result_kernelf;
-    std::vector<std::complex<double>> result_kernel2;
-    std::vector<std::complex<float>> result_kernelf2;
+template< typename T >
+void test_dft_kernel(std::function< float (const std::vector<T>&, std::vector<std::complex<T>>&) > test_func,
+                     std::function< float (const std::vector<T>&, std::vector<std::complex<T>>&) > reference_func,
+                     const std::vector<T> &stimulus, long double max_error)
+{
+    std::vector<std::complex<T>> reference_result;
+    std::vector<std::complex<T>> test_result;
 
-    printf("Performing warm-up kernel runs...\n");
-    (void)CXTiming::device_dft<double>(throwaway_vec, result_kernel);
-    (void)CXTiming::device_dft<float>(throwaway_vecF, result_kernelf);
-    (void)CXTiming::device_fft_radix2<double>(throwaway_vec, result_kernel2);
-    (void)CXTiming::device_fft_radix2<float>(throwaway_vecF, result_kernelf2);
-    result_kernel.clear();
-    result_kernelf.clear();
-    result_kernel2.clear();
-    result_kernelf2.clear();
+    // Warm-up kernel
+    (void)test_func(stimulus, test_result);
+    test_result.clear();
 
-    printf("\n======== Testing 64-bit doubles... ========\n");
-    (void)CXTiming::host_dft<double>(myVec, result);
-    (void)CXTiming::device_dft<double>(myVec, result_kernel);
-    (void)CXTiming::device_fft_radix2<double>(myVec, result_kernel2);
+    // Test relative error
+    (void)reference_func(stimulus, reference_result);
+    (void)test_func(stimulus, test_result);
 
-    long double rel_error_d = HELP::relative_error(result_kernel, result);
-    long double rel_error_d2 = HELP::relative_error(result_kernel2, result);
+    long double rel_error = HELP::relative_error(test_result, reference_result);
 
-    float h_runtime = 0.0, k_runtime = 0.0, k_runtime2 = 0.0;
+    float h_runtime = 0.0, k_runtime = 0.0;
     for (int i = 0; i < numRuns; i++)
     {
-        h_runtime += CXTiming::host_dft<double>(myVec, result);
-        k_runtime += CXTiming::device_dft<double>(myVec, result_kernel);
-        k_runtime2 += CXTiming::device_fft_radix2<double>(myVec, result_kernel2);
+        h_runtime += reference_func(stimulus, reference_result);
+        k_runtime += test_func(stimulus, test_result);
     }
     h_runtime /= numRuns;
     k_runtime /= numRuns;
-    k_runtime2 /= numRuns;
 
-    printf("Host (double) ran for %f ms averaged over %d runs.\n", h_runtime, numRuns);
-    //HELP::print_vec_complex(result);
-
-    printf("DFT Kernel (double) ran for %f ms averaged over %d runs.\nError: %.20Lf\n",
-            k_runtime, numRuns, rel_error_d);
-    //HELP::print_vec_complex(result_kernel);
-
-    printf("FFT Radix2 Kernel (double) ran for %f ms averaged over %d runs.\nError: %.20Lf\n",
-            k_runtime2, numRuns, rel_error_d2);
-    //HELP::print_vec_complex(result_kernel);
-
-    if (rel_error_d2 < HELP::MAX_RELATIVE_ERROR_DOUBLE)
-        printf("FFT Error PASS!\n");
+    printf("Host ran for %f ms averaged over %d runs.\n", h_runtime, numRuns);
+    printf("Kernel ran for %f ms averaged over %d runs.\nError: %.20Lf\n",
+            k_runtime, numRuns, rel_error);
+    if (rel_error < max_error)
+        printf("Error PASS!\n");
     else
-        printf("FFT Error FAIL!\n");
+        printf("Error FAIL!\n");
 
-    printf("\n======== Testing 32-bit floats... ========\n");
-    (void)CXTiming::host_dft<float>(myVecf, resultf);
-    (void)CXTiming::device_dft<float>(myVecf, result_kernelf);
-    (void)CXTiming::device_fft_radix2<float>(myVecf, result_kernelf2);
-    long double rel_error_f = HELP::relative_error(result_kernelf, resultf);
-    long double rel_error_f2 = HELP::relative_error(result_kernelf2, resultf);
-
-    float h_runtimef = 0.0, k_runtimef = 0.0, k_runtimef2 = 0.0;
-    for (int i = 0; i < numRuns; i++)
-    {
-        h_runtimef += CXTiming::host_dft<float>(myVecf, resultf);
-        k_runtimef += CXTiming::device_dft<float>(myVecf, result_kernelf);
-        k_runtimef2 += CXTiming::device_fft_radix2<float>(myVecf, result_kernelf2);
-    }
-    h_runtimef /= numRuns;
-    k_runtimef /= numRuns;
-    k_runtimef2 /= numRuns;
-
-    printf("Host (float) ran for %f ms averaged over %d runs.\n", h_runtimef, numRuns);
-    //HELP::print_vec_complex(resultf);
-
-    printf("DFT Kernel (float) ran for %f ms averaged over %d runs.\nError: %.20Lf\n",
-        k_runtimef, numRuns, rel_error_f);
-    //HELP::print_vec_complex(result_kernelf);
-
-    printf("FFT Radix2 Kernel (float) ran for %f ms averaged over %d runs.\nError: %.20Lf\n",
-        k_runtimef2, numRuns, rel_error_f2);
-    //HELP::print_vec_complex(result_kernelf);
-
-    if (rel_error_f2 < HELP::MAX_RELATIVE_ERROR_FLOAT)
-        printf("FFT Error PASS!\n");
-    else
-        printf("FFT Error FAIL!\n");
-    
+    HELP::print_vec_complex(test_result);
+    HELP::print_vec_complex(reference_result);
 }

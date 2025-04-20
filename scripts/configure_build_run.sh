@@ -28,8 +28,9 @@ rm -f *.ncu-rep
 cmake -S cpp -B cpp/build -DCMAKE_PREFIX_PATH=$(pwd)/build/install/ && \
 cmake --build cpp/build -j $(nproc)  && \
 module load cuda && \
-ncu -o my_project ./cpp/build/my_project && \
-${CUDA_HOME}/bin/nsys profile -o my_project.nsys-rep --force-overwrite true \
-  ./cpp/build/my_project
+./cpp/build/my_project
+#ncu -o my_project ./cpp/build/my_project && \
+#${CUDA_HOME}/bin/nsys profile -o my_project.nsys-rep --force-overwrite true \
+#  ./cpp/build/my_project
 
 

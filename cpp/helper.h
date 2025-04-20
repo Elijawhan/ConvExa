@@ -8,7 +8,7 @@
 #include <cstdlib>
 #include <type_traits>
 #include <tuple>
-#define numRuns 10
+#define numRuns 1
 
 namespace HELP
 {
@@ -88,7 +88,7 @@ namespace HELP
     {
         for (T i : vec)
         {
-            printf("(%f, %f) ", i.real(), i.imag());
+            printf("(%.10f, %.10f) ", i.real(), i.imag());
         }
         printf("\n");
     }
@@ -184,7 +184,8 @@ namespace HELP
         size_t length = computed_vec.size();
         if (length != reference_vec.size())
         {
-            throw std::runtime_error("Relative error inputs must be the same size.");
+            std::string error_msg = "Relative error inputs must be the same size. (" + std::to_string(computed_vec.size()) + "), (" + std::to_string(reference_vec.size()) + ")";
+            throw std::runtime_error(error_msg);
         }
         
         long double error_norm = 0.0;
@@ -197,6 +198,16 @@ namespace HELP
             auto const &computed_i = computed_vec[idx].imag();
             long double local_error_r = (reference_r - computed_r);
             long double local_error_i = (reference_i - computed_i);
+            /*
+            if (local_error_r >= MAX_RELATIVE_ERROR_FLOAT)
+            {
+                std::cout << "Real Error Located at Index: " << idx << "  |  Magnitude: " << local_error_r << std::endl;
+            }
+            if (local_error_i >= MAX_RELATIVE_ERROR_FLOAT)
+            {
+                std::cout << "Imaginary Error Located at Index: " << idx << "  |  Magnitude: " << local_error_i << std::endl;
+            }
+            */
             error_norm += (local_error_r * local_error_r) + (local_error_i * local_error_i);
             reference_norm += (reference_r * reference_r) + (reference_i * reference_i);
         }
