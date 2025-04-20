@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <random>
 #include <functional>
-#include "helper.h"
+#include <helper.h>
 
 template< typename T >
 void test_dft_kernel(std::function< float (const std::vector<T>&, std::vector<std::complex<T>>&) > test_func,

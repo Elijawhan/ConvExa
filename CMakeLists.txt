@@ -11,6 +11,7 @@ add_library(convexa
   src/convolutions/host_convolve.cpp
   src/convolutions/device_convolve.cu
   src/convolutions/device_convolve_overlap_save.cu
+  src/convolutions/device_convolve_fft.cu
   src/dfts/host_dft.cpp
   src/dfts/device_dft.cu
   src/dfts/device_fft_radix2.cu
@@ -35,7 +36,7 @@ install(EXPORT convexaTargets
 install(FILES include/convexa.h include/cxkernels.h include/helper.h
         DESTINATION include)
 
-
+        
 # Generate libconvexaTargets.cmake for export
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(

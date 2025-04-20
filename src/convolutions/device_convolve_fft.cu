@@ -2,42 +2,25 @@
 #include <cxkernels.h>
 #include <cuda_runtime.h>
 #include <helper_cuda.h>
+
+#include <cufft.h>
+#include <helper.h>
+
 #define BLOCK_LEN 1024
 namespace CXKernels
 {
     template <typename T = double>
-    __global__ void overlap_save_full_convolve(T *A, T *B, T *C, unsigned int aN, unsigned int bN, unsigned int cN)
+    __global__ void vec_multiply(T *A, T *B, T *C, unsigned int N)
     {
-        extern __shared__ __align__(sizeof(T)) unsigned char my_smem[];
-        T *s_sig = reinterpret_cast<T *>(my_smem);
-        unsigned int sig_size = bN + BLOCK_LEN ;
-        // printf("%d Size!", sig_size);
-
         unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
-        for (int n = index; n < ((cN / BLOCK_LEN) + 1) * BLOCK_LEN; n += blockDim.x * gridDim.x) // scuttles down the signal
+        for (int n = index; n < N; n += blockDim.x * gridDim.x) // scuttles down the signal
         {
-            for (int sig_i = threadIdx.x; sig_i < sig_size ; sig_i+= blockDim.x) {
-                int sig_index =  n - bN + sig_i - threadIdx.x;
-                if (sig_index >= 0 && sig_index < aN) { s_sig[sig_i] = A[sig_index];}
-                else s_sig[sig_i] = 0;
-            }
-            __syncthreads();
-
-            if (n < cN)
-            {
-                T sum = 0.0;
-                // Convert the pixel
-                for (int i = 0; i < bN; i += 1) // scuttles down the kernel
-                {
-                    sum += B[ i] * s_sig[bN   +threadIdx.x - i];//* A[n - i];
-                }
-                C[n] = sum;
-            }
+            C[n] = A[n] * B[n];
         }
     }
 }
 template <typename T = double>
-float CXTiming::device_convolve_overlap_save(const std::vector<T> &signal, const std::vector<T> &kernel, std::vector<T> &output)
+float CXTiming::device_convolve_fft(const std::vector<T> &signal, const std::vector<T> &kernel, std::vector<T> &output)
 {
     T *device_a = nullptr;
     T *device_b = nullptr;
@@ -67,10 +50,9 @@ float CXTiming::device_convolve_overlap_save(const std::vector<T> &signal, const
         blockSize.x = ol;
     int blocks = signal.size() / blockSize.x + 1;
     dim3 gridSize(blocks);
-    size_t shmem = (BLOCK_LEN + kernel.size() )* sizeof(T);
     cudaEventRecord(start);
     // Memory Loaded, Perform Computations...
-    CXKernels::overlap_save_full_convolve<T><<<gridSize, blockSize, shmem>>>(device_a, device_b, device_c, signal.size(), kernel.size(), ol);
+    CXKernels::vec_multiply<T><<<gridSize, blockSize>>>(device_a, device_b, device_c, ol);
 
     cudaEventRecord(stop);
 
@@ -89,7 +71,7 @@ float CXTiming::device_convolve_overlap_save(const std::vector<T> &signal, const
     return milliseconds;
 }
 
-template float CXTiming::device_convolve_overlap_save<double>(const std::vector<double> &, const std::vector<double> &, std::vector<double> &);
-template float CXTiming::device_convolve_overlap_save<float>(const std::vector<float> &, const std::vector<float> &, std::vector<float> &);
+template float CXTiming::device_convolve_fft<double>(const std::vector<double> &, const std::vector<double> &, std::vector<double> &);
+template float CXTiming::device_convolve_fft<float>(const std::vector<float> &, const std::vector<float> &, std::vector<float> &);
 // template float CXTiming::device_convolve_overlap_add<uint16_t>(const std::vector<uint16_t>&, const std::vector<uint16_t>&, std::vector<uint16_t>&);
 // template float CXTiming::device_convolve_overlap_add<int16_t>(const std::vector<int16_t>&, const std::vector<int16_t>&, std::vector<int16_t>&);
