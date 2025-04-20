@@ -157,6 +157,20 @@ namespace HELP
     template <typename T>
     long double relative_error(std::vector<T> computed_vec, std::vector<T> reference_vec)
     {
+            // calculate relative error
+    // double errorNorm = 0.0;
+    // double referenceNorm = 0.0;
+    // for (size_t idx = 0; idx < myResult_h.size(); ++idx)
+    // {
+    //     auto const &reference = myResult_h[idx];
+    //     auto const &computed = myResult_d[idx];
+    //     double localError = reference - computed;
+    //     errorNorm += localError * localError;
+    //     referenceNorm += reference * reference;
+    // }
+    // double re  = std::sqrt(errorNorm / referenceNorm);
+
+    // WISE'S WISDOM ^
         //printf("Size of long double: %d-bit\n", sizeof(long double) * 8);
         size_t length = computed_vec.size();
         if (length != reference_vec.size())
@@ -167,8 +181,8 @@ namespace HELP
         long double reference_norm = 0.0;
         for (size_t idx = 0; idx < length; ++idx)
         {
-            auto const &reference = reference_vec[idx];
-            auto const &computed = computed_vec[idx];
+            const long double  &reference = reference_vec[idx];
+            const long double  &computed = computed_vec[idx];
             long double localError = reference - computed;
             error_norm += localError * localError;
             reference_norm += reference * reference;
@@ -192,10 +206,10 @@ namespace HELP
         long double reference_norm = 0.0;
         for (size_t idx = 0; idx < length; ++idx)
         {
-            auto const &reference_r = reference_vec[idx].real();
-            auto const &computed_r = computed_vec[idx].real();
-            auto const &reference_i = reference_vec[idx].imag();
-            auto const &computed_i = computed_vec[idx].imag();
+            const long double &reference_r = reference_vec[idx].real();
+            const long double &computed_r = computed_vec[idx].real();
+            const long double &reference_i = reference_vec[idx].imag();
+            const long double &computed_i = computed_vec[idx].imag();
             long double local_error_r = (reference_r - computed_r);
             long double local_error_i = (reference_i - computed_i);
             /*

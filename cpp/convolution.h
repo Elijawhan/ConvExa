@@ -2,14 +2,14 @@
 #include <cxkernels.h>
 #include "helper.h"
 
-#define CONV_TYPE_USED double
+#define CONV_TYPE_USED float
 
 void c_main() {
     printf("\n******************************************\n");
     printf("Beginning Convolution Test:\n");
     std::vector<int16_t> data;
-    HELP::wav_hdr hdr = HELP::read_wav("./cpp/audio/subroutines.wav", &data);
-    // HELP::wav_hdr hdr = HELP::read_wav("./cpp/audio/badadeedur.wav", &data);
+    // HELP::wav_hdr hdr = HELP::read_wav("./cpp/audio/subroutines.wav", &data);
+    HELP::wav_hdr hdr = HELP::read_wav("./cpp/audio/badadeedur.wav", &data);
     printf("Audio Sampling Rate: %dHz\n", hdr.SamplesPerSec);
     std::vector<CONV_TYPE_USED> fdata = HELP::vec_cast<int16_t, CONV_TYPE_USED>(data);
     // std::vector<CONV_TYPE_USED> fdata = std::vector<CONV_TYPE_USED>({ 1, 2, 3, 4, 5});
@@ -90,101 +90,118 @@ void c_main() {
     std::vector<CONV_TYPE_USED> myResult_h;
     float base_convolve_h_timing = CXTiming::host_convolve(fdata, myKernel, myResult_h);
     std::vector<CONV_TYPE_USED> myResult_d;
-    float base_convolve_d_timing = CXTiming::device_convolve_overlap_save(fdata, myKernel, myResult_d);
-    // float base_convolve_d_timing = CXTiming::device_convolve_overlap_save(fdata, myKernel, myResult_d);
-
-    // calculate relative error
-    double errorNorm = 0.0;
-    double referenceNorm = 0.0;
-    for (size_t idx = 0; idx < myResult_h.size(); ++idx)
-    {
-        auto const &reference = myResult_h[idx];
-        auto const &computed = myResult_d[idx];
-        double localError = reference - computed;
-        errorNorm += localError * localError;
-        referenceNorm += reference * reference;
-    }
-    double re  = std::sqrt(errorNorm / referenceNorm);
-
-    // for (auto item : myResult_d) {
-    //     printf("%f, ", item);
-    // }
-    // printf("\n");
-    // for (auto item : myResult_h) {
-    //     printf("%f, ", item);
-    // }
-    // printf("\n");
-
-    printf("Relative Error device basic: %.8f ", re);
+    float base_convolve_d_timing = CXTiming::device_convolve(fdata, myKernel, myResult_d);
+    
+    long double re = HELP::relative_error(myResult_d, myResult_h);
+    printf("Relative Error device basic: %.8Lf ", re);
     if (re < HELP::MAX_RELATIVE_ERROR_FLOAT)
         printf("PASS\n");
     else
         printf("FAIL\n");
 
-    // //PERFORMANCE!!!!
-    // base_convolve_h_timing = 0;
-    // for (int i = 0; i < numRuns; i++)
-    // {
-    //     myResult_h.clear();
-    //     base_convolve_h_timing += CXTiming::host_convolve(fdata, myKernel, myResult_h);
-    // }
-    // base_convolve_h_timing = base_convolve_h_timing / numRuns;
-    // base_convolve_d_timing = 0;
-    // for (int i = 0; i < numRuns; i++)
-    // {
-    //     myResult_d.clear();
-    //     base_convolve_d_timing += CXTiming::device_convolve(fdata, myKernel, myResult_d);
-    // }
-    // base_convolve_d_timing = base_convolve_d_timing / numRuns;
+    myResult_d.clear();
+    float base_convolve_d_oa_timing = CXTiming::device_convolve_overlap_save(fdata, myKernel, myResult_d);
 
-    // printf("==== Timing for %d points over %d runs ====\n", data.size() + myKernel.size() - 1, numRuns);
-    // printf("Host Impl Timing: %f ms\n", base_convolve_h_timing);
-    // printf("Basic Convolution Kernel Timing: %f ms\n", base_convolve_d_timing);
-    // HELP::write_wav("./cpp/audio/badadeedu.wav", HELP::vec_cast<CONV_TYPE_USED, int16_t>(myResult_d), hdr);
+    re = HELP::relative_error(myResult_d, myResult_h);
+    printf("Relative Error device overlap: %.8Lf ", re);
+    if (re < HELP::MAX_RELATIVE_ERROR_FLOAT)
+        printf("PASS\n");
+    else
+        printf("FAIL\n");
 
-    // ////// SECOND ////
-    // data.clear();
-    // hdr = HELP::read_wav("./cpp/audio/classic_jam.wav", &data);
-    // fdata = HELP::vec_cast<int16_t, float>(data);
-    // base_convolve_h_timing = 0;
-    // for (int i = 0; i < numRuns; i++)
-    // {
-    //     myResult_h.clear();
-    //     base_convolve_h_timing += CXTiming::host_convolve(fdata, myKernel, myResult_h);
-    // }
-    // base_convolve_h_timing = base_convolve_h_timing / numRuns;
-    // base_convolve_d_timing = 0;
-    // for (int i = 0; i < numRuns; i++)
-    // {
-    //     myResult_d.clear();
-    //     base_convolve_d_timing += CXTiming::device_convolve(fdata, myKernel, myResult_d);
-    // }
-    // base_convolve_d_timing = base_convolve_d_timing / numRuns;
-    // printf("==== Timing for %d points over %d runs ====\n", data.size() + myKernel.size() - 1, numRuns);
-    // printf("Host Impl Timing: %f ms\n", base_convolve_h_timing);
-    // printf("Basic Convolution Kernel Timing: %f ms\n", base_convolve_d_timing);
-    // HELP::write_wav("./cpp/audio/unclassic_jam.wav", HELP::vec_cast<float, int16_t>(myResult_d), hdr);
+    //PERFORMANCE!!!!
+    base_convolve_h_timing = 0;
+    for (int i = 0; i < numRuns; i++)
+    {
+        myResult_h.clear();
+        base_convolve_h_timing += CXTiming::host_convolve(fdata, myKernel, myResult_h);
+    }
+    base_convolve_h_timing = base_convolve_h_timing / numRuns;
+    base_convolve_d_timing = 0;
+    for (int i = 0; i < numRuns; i++)
+    {
+        myResult_d.clear();
+        base_convolve_d_timing += CXTiming::device_convolve(fdata, myKernel, myResult_d);
+    }
+    base_convolve_d_timing = base_convolve_d_timing / numRuns;
 
-    // ////// SECOND ////
-    // data.clear();
-    // hdr = HELP::read_wav("./cpp/audio/subroutines.wav", &data);
-    // fdata = HELP::vec_cast<int16_t, float>(data);
-    // base_convolve_h_timing = 0;
-    // for (int i = 0; i < numRuns; i++)
-    // {
-    //     myResult_h.clear();
-    //     base_convolve_h_timing += CXTiming::host_convolve(fdata, myKernel, myResult_h);
-    // }
-    // base_convolve_h_timing = base_convolve_h_timing / numRuns;
-    // base_convolve_d_timing = 0;
-    // for (int i = 0; i < numRuns; i++)
-    // {
-    //     myResult_d.clear();
-    //     base_convolve_d_timing += CXTiming::device_convolve(fdata, myKernel, myResult_d);
-    // }
-    // base_convolve_d_timing = base_convolve_d_timing / numRuns;
-    // printf("==== Timing for %d points over %d runs ====\n", (data.size() + myKernel.size() - 1), numRuns);
-    // printf("Host Impl Timing: %f ms\n", base_convolve_h_timing);
-    // printf("Basic Convolution Kernel Timing: %f ms\n", base_convolve_d_timing);
-    // HELP::write_wav("./cpp/audio/routines.wav", HELP::vec_cast<float, int16_t>(myResult_d), hdr);
+    base_convolve_d_oa_timing = 0;
+    for (int i = 0; i < numRuns; i++)
+    {
+        myResult_d.clear();
+        base_convolve_d_oa_timing += CXTiming::device_convolve_overlap_save(fdata, myKernel, myResult_d);
+    }
+    base_convolve_d_oa_timing = base_convolve_d_oa_timing / numRuns;
+
+    printf("==== Timing for %d points over %d runs ====\n", data.size() + myKernel.size() - 1, numRuns);
+    printf("Host Impl Timing: %f ms\n", base_convolve_h_timing);
+    printf("Basic Convolution Kernel Timing: %f ms\n", base_convolve_d_timing);
+    printf("Overlap Add Convolution Kernel Timing: %f ms\n", base_convolve_d_oa_timing);
+    HELP::write_wav("./cpp/audio/badadeedu.wav", HELP::vec_cast<CONV_TYPE_USED, int16_t>(myResult_d), hdr);
+
+    ////// SECOND ////
+    data.clear();
+    hdr = HELP::read_wav("./cpp/audio/classic_jam.wav", &data);
+    fdata = HELP::vec_cast<int16_t, float>(data);
+    base_convolve_h_timing = 0;
+    for (int i = 0; i < numRuns; i++)
+    {
+        myResult_h.clear();
+        base_convolve_h_timing += CXTiming::host_convolve(fdata, myKernel, myResult_h);
+    }
+    base_convolve_h_timing = base_convolve_h_timing / numRuns;
+    base_convolve_d_timing = 0;
+    for (int i = 0; i < numRuns; i++)
+    {
+        myResult_d.clear();
+        base_convolve_d_timing += CXTiming::device_convolve(fdata, myKernel, myResult_d);
+    }
+    base_convolve_d_timing = base_convolve_d_timing / numRuns;
+
+    base_convolve_d_oa_timing = 0;
+    for (int i = 0; i < numRuns; i++)
+    {
+        myResult_d.clear();
+        base_convolve_d_oa_timing += CXTiming::device_convolve_overlap_save(fdata, myKernel, myResult_d);
+    }
+    base_convolve_d_oa_timing = base_convolve_d_oa_timing / numRuns;
+
+    printf("==== Timing for %d points over %d runs ====\n", data.size() + myKernel.size() - 1, numRuns);
+    printf("Host Impl Timing: %f ms\n", base_convolve_h_timing);
+    printf("Basic Convolution Kernel Timing: %f ms\n", base_convolve_d_timing);
+    printf("Overlap Add Convolution Kernel Timing: %f ms\n", base_convolve_d_oa_timing);
+    HELP::write_wav("./cpp/audio/unclassic_jam.wav", HELP::vec_cast<float, int16_t>(myResult_d), hdr);
+
+    ////// SECOND ////
+    data.clear();
+    hdr = HELP::read_wav("./cpp/audio/subroutines.wav", &data);
+    fdata = HELP::vec_cast<int16_t, float>(data);
+    base_convolve_h_timing = 0;
+    for (int i = 0; i < numRuns; i++)
+    {
+        myResult_h.clear();
+        base_convolve_h_timing += CXTiming::host_convolve(fdata, myKernel, myResult_h);
+    }
+    base_convolve_h_timing = base_convolve_h_timing / numRuns;
+    base_convolve_d_timing = 0;
+    for (int i = 0; i < numRuns; i++)
+    {
+        myResult_d.clear();
+        base_convolve_d_timing += CXTiming::device_convolve(fdata, myKernel, myResult_d);
+    }
+    base_convolve_d_timing = base_convolve_d_timing / numRuns;
+
+    base_convolve_d_oa_timing = 0;
+    for (int i = 0; i < numRuns; i++)
+    {
+        myResult_d.clear();
+        base_convolve_d_oa_timing += CXTiming::device_convolve_overlap_save(fdata, myKernel, myResult_d);
+    }
+    base_convolve_d_oa_timing = base_convolve_d_oa_timing / numRuns;
+
+    printf("==== Timing for %d points over %d runs ====\n", (data.size() + myKernel.size() - 1), numRuns);
+    printf("Host Impl Timing: %f ms\n", base_convolve_h_timing);
+    printf("Basic Convolution Kernel Timing: %f ms\n", base_convolve_d_timing);
+    printf("Overlap Add Convolution Kernel Timing: %f ms\n", base_convolve_d_oa_timing);
+    HELP::write_wav("./cpp/audio/routines.wav", HELP::vec_cast<float, int16_t>(myResult_d), hdr);
 }

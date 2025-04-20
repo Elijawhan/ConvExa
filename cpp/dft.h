@@ -43,12 +43,12 @@ void d_main()
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<double> dist(1.0, 10000000.0);
-    for (int i = 1; i < 9; i++)
+    for (int i = 0; i < 16384; i++)
     {
-        //myVec.push_back(dist(gen));
-        //myVecf.push_back(static_cast<float>(myVec.back()));
-        myVec.push_back(static_cast<double>(i)*100000);
-        myVecf.push_back(static_cast<float>(i)*100000);
+        myVec.push_back(dist(gen));
+        myVecf.push_back(static_cast<float>(myVec.back()));
+        //myVec.push_back(static_cast<double>(i)*100000);
+        //myVecf.push_back(static_cast<float>(i)*100000);
     }
     
     printf("Size of input vectors: %d\n", myVec.size());
@@ -61,7 +61,7 @@ void d_main()
         myVec, HELP::MAX_RELATIVE_ERROR_DOUBLE
     );
     std::cout << std::endl;
-    */
+    
     std::cout << "TESTING FFT RADIX2:" << std::endl;
     test_dft_kernel<double>(
         static_cast<std::function< float (const std::vector<double>&, std::vector<std::complex<double>>&) >>(CXTiming::device_fft_radix2<double>),
@@ -69,10 +69,10 @@ void d_main()
         myVec, HELP::MAX_RELATIVE_ERROR_DOUBLE
     );
     std::cout << std::endl;
-    
+    */
     std::cout << std::endl;
     std::cout << "==================== " << "FP32" << " ====================" << std::endl;
-    /*
+    /**/
     std::cout << "TESTING DFT:" << std::endl;
     test_dft_kernel<float>(
         static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::device_dft<float>),
@@ -80,11 +80,19 @@ void d_main()
         myVecf, HELP::MAX_RELATIVE_ERROR_FLOAT
     );
     std::cout << std::endl;
-    */
+    
     std::cout << "TESTING FFT RADIX2:" << std::endl;
     test_dft_kernel<float>(
         static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::device_fft_radix2<float>),
         static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::host_fft_radix2<float>),
+        myVecf, HELP::MAX_RELATIVE_ERROR_FLOAT
+    );
+    std::cout << std::endl;
+
+    std::cout << "TESTING FFT RADIX2 VS DFT:" << std::endl;
+    test_dft_kernel<float>(
+        static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::host_fft_radix2<float>),
+        static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::host_dft<float>),
         myVecf, HELP::MAX_RELATIVE_ERROR_FLOAT
     );
     std::cout << std::endl;
@@ -125,6 +133,6 @@ void test_dft_kernel(std::function< float (const std::vector<T>&, std::vector<st
     else
         printf("Error FAIL!\n");
 
-    HELP::print_vec_complex(test_result);
-    HELP::print_vec_complex(reference_result);
+    //HELP::print_vec_complex(test_result);
+    //HELP::print_vec_complex(reference_result);
 }
