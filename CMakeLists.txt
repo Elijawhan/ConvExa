@@ -15,9 +15,10 @@ add_library(convexa
   src/dfts/device_dft.cu
   src/dfts/device_fft_radix2.cu
   src/dfts/host_fft_radix2.cpp
+  src/dfts/cufft.cu
 )
 
-target_link_libraries(convexa PRIVATE CUDA::cudart)
+target_link_libraries(convexa PRIVATE CUDA::cudart CUDA::cufft)
 
 # Install the library
 install(TARGETS convexa
@@ -31,7 +32,7 @@ install(EXPORT convexaTargets
         DESTINATION lib/cmake/convexa)
 
 # Install the headers
-install(FILES include/convexa.h include/cxkernels.h
+install(FILES include/convexa.h include/cxkernels.h include/helper.h
         DESTINATION include)
 
 

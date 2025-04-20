@@ -42,8 +42,8 @@ void d_main()
     
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_real_distribution<double> dist(1.0, 10000000.0);
-    for (int i = 0; i < 16384; i++)
+    std::uniform_real_distribution<double> dist(1.0, 100.0);
+    for (int i = 0; i < pow(2,24); i++)
     {
         myVec.push_back(dist(gen));
         myVecf.push_back(static_cast<float>(myVec.back()));
@@ -61,18 +61,26 @@ void d_main()
         myVec, HELP::MAX_RELATIVE_ERROR_DOUBLE
     );
     std::cout << std::endl;
-    
+    */
     std::cout << "TESTING FFT RADIX2:" << std::endl;
     test_dft_kernel<double>(
         static_cast<std::function< float (const std::vector<double>&, std::vector<std::complex<double>>&) >>(CXTiming::device_fft_radix2<double>),
+        static_cast<std::function< float (const std::vector<double>&, std::vector<std::complex<double>>&) >>(CXTiming::cufft<double>),
+        myVec, HELP::MAX_RELATIVE_ERROR_DOUBLE
+    );
+    std::cout << std::endl;
+    /*
+    std::cout << "TESTING FFT RADIX2 W/ HOST:" << std::endl;
+    test_dft_kernel<double>(
         static_cast<std::function< float (const std::vector<double>&, std::vector<std::complex<double>>&) >>(CXTiming::host_fft_radix2<double>),
+        static_cast<std::function< float (const std::vector<double>&, std::vector<std::complex<double>>&) >>(CXTiming::cufft<double>),
         myVec, HELP::MAX_RELATIVE_ERROR_DOUBLE
     );
     std::cout << std::endl;
     */
     std::cout << std::endl;
     std::cout << "==================== " << "FP32" << " ====================" << std::endl;
-    /**/
+    /*
     std::cout << "TESTING DFT:" << std::endl;
     test_dft_kernel<float>(
         static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::device_dft<float>),
@@ -80,22 +88,23 @@ void d_main()
         myVecf, HELP::MAX_RELATIVE_ERROR_FLOAT
     );
     std::cout << std::endl;
-    
+    */
     std::cout << "TESTING FFT RADIX2:" << std::endl;
     test_dft_kernel<float>(
         static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::device_fft_radix2<float>),
-        static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::host_fft_radix2<float>),
+        static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::cufft<float>),
         myVecf, HELP::MAX_RELATIVE_ERROR_FLOAT
     );
     std::cout << std::endl;
-
-    std::cout << "TESTING FFT RADIX2 VS DFT:" << std::endl;
+    /*
+    std::cout << "TESTING FFT RADIX2 W/ HOST:" << std::endl;
     test_dft_kernel<float>(
         static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::host_fft_radix2<float>),
-        static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::host_dft<float>),
+        static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::cufft<float>),
         myVecf, HELP::MAX_RELATIVE_ERROR_FLOAT
     );
     std::cout << std::endl;
+    */
 }
 
 template< typename T >

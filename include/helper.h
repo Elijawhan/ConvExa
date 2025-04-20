@@ -230,7 +230,7 @@ namespace HELP
     }
 
     template <typename O, typename R>
-    std::vector<R> vec_cast(std::vector<O> original) {
+    std::vector<R> vec_cast(const std::vector<O> &original) {
         std::vector<R> result;
         for (O item : original) {
             result.push_back(static_cast<R>(item));

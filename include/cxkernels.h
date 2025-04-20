@@ -42,4 +42,6 @@ namespace CXTiming
     float device_dft(const std::vector<T> &signal, std::vector<std::complex<T>> &result);
     template <typename T>
     float device_fft_radix2(const std::vector<T> &signal, std::vector<std::complex<T>> &result);
+    template <typename T>
+    float cufft(const std::vector<T> &signal, std::vector<std::complex<T>> &result);
 }
