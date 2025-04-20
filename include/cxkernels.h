@@ -36,6 +36,8 @@ namespace CXTiming
 {
     template <typename T>
     float device_convolve(const std::vector<T> &signal, const std::vector<T> &kernel, std::vector<T> &output);
+    template <typename T= double>
+    float device_convolve_overlap_save(const std::vector<T> &signal, const std::vector<T> &kernel, std::vector<T> &output);
     template <typename T>
     float device_dft(const std::vector<T> &signal, std::vector<std::complex<T>> &result);
     template <typename T>

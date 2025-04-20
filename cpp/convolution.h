@@ -2,14 +2,20 @@
 #include <cxkernels.h>
 #include "helper.h"
 
+#define CONV_TYPE_USED double
+
 void c_main() {
     printf("\n******************************************\n");
     printf("Beginning Convolution Test:\n");
     std::vector<int16_t> data;
     HELP::wav_hdr hdr = HELP::read_wav("./cpp/audio/subroutines.wav", &data);
-    std::vector<float> fdata = HELP::vec_cast<int16_t, float>(data);
+    // HELP::wav_hdr hdr = HELP::read_wav("./cpp/audio/badadeedur.wav", &data);
+    printf("Audio Sampling Rate: %dHz\n", hdr.SamplesPerSec);
+    std::vector<CONV_TYPE_USED> fdata = HELP::vec_cast<int16_t, CONV_TYPE_USED>(data);
+    // std::vector<CONV_TYPE_USED> fdata = std::vector<CONV_TYPE_USED>({ 1, 2, 3, 4, 5});
     // Filter Design software used: http://t-filter.engineerjs.com
-    std::vector<float> myKernel = {0.005184042182695352, 0.00048479825762196997, 0.0005061197474262169, 0.0005270715548515555, 0.0005475890126449697,
+    // std::vector<CONV_TYPE_USED> myKernel = {6, 7, 8, 9, 10, 11, 12, 13};
+    std::vector<CONV_TYPE_USED> myKernel = {0.005184042182695352, 0.00048479825762196997, 0.0005061197474262169, 0.0005270715548515555, 0.0005475890126449697,
                                    0.0005676036724039025, 0.0005870631509281676, 0.0006059009136524695, 0.000624040883389753, 0.0006413492301257154, 0.000657734482648827,
                                    0.0006731593746308583, 0.0006875614962714815, 0.0007008126483952237, 0.0007127726885099106, 0.0007234364085612756, 0.0007327589621457485,
                                    0.0007405426422992027, 0.0007466304990428558, 0.0007512768238413562, 0.000753930696143233, 0.0007549258420079964, 0.000753924009221302,
@@ -81,10 +87,11 @@ void c_main() {
                                    0.0005270715548515555, 0.0005061197474262169, 0.00048479825762196997, 0.005184042182695352};
 
     printf("Kernel size: %d taps\n", myKernel.size());
-    std::vector<float> myResult_h;
+    std::vector<CONV_TYPE_USED> myResult_h;
     float base_convolve_h_timing = CXTiming::host_convolve(fdata, myKernel, myResult_h);
-    std::vector<float> myResult_d;
-    float base_convolve_d_timing = CXTiming::device_convolve(fdata, myKernel, myResult_d);
+    std::vector<CONV_TYPE_USED> myResult_d;
+    float base_convolve_d_timing = CXTiming::device_convolve_overlap_save(fdata, myKernel, myResult_d);
+    // float base_convolve_d_timing = CXTiming::device_convolve_overlap_save(fdata, myKernel, myResult_d);
 
     // calculate relative error
     double errorNorm = 0.0;
@@ -98,6 +105,15 @@ void c_main() {
         referenceNorm += reference * reference;
     }
     double re  = std::sqrt(errorNorm / referenceNorm);
+
+    // for (auto item : myResult_d) {
+    //     printf("%f, ", item);
+    // }
+    // printf("\n");
+    // for (auto item : myResult_h) {
+    //     printf("%f, ", item);
+    // }
+    // printf("\n");
 
     printf("Relative Error device basic: %.8f ", re);
     if (re < HELP::MAX_RELATIVE_ERROR_FLOAT)
@@ -124,7 +140,7 @@ void c_main() {
     // printf("==== Timing for %d points over %d runs ====\n", data.size() + myKernel.size() - 1, numRuns);
     // printf("Host Impl Timing: %f ms\n", base_convolve_h_timing);
     // printf("Basic Convolution Kernel Timing: %f ms\n", base_convolve_d_timing);
-    // HELP::write_wav("./cpp/audio/badadeedu.wav", HELP::vec_cast<float, int16_t>(myResult_d), hdr);
+    // HELP::write_wav("./cpp/audio/badadeedu.wav", HELP::vec_cast<CONV_TYPE_USED, int16_t>(myResult_d), hdr);
 
     // ////// SECOND ////
     // data.clear();

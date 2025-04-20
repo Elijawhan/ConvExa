@@ -10,6 +10,7 @@ add_library(convexa
   src/convexa.cpp
   src/convolutions/host_convolve.cpp
   src/convolutions/device_convolve.cu
+  src/convolutions/device_convolve_overlap_save.cu
   src/dfts/host_dft.cpp
   src/dfts/device_dft.cu
   src/dfts/device_fft_radix2.cu
