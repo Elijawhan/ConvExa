@@ -34,7 +34,7 @@ namespace HELP
         uint32_t Subchunk2Size; // Sampled data length
     } wav_hdr;
 
-    int tokenize_csv(
+    inline int tokenize_csv(
         char *fname,
         std::vector<float> &matrix) // Must pass in vectors so that the memory stays alive.
     {
@@ -71,7 +71,7 @@ namespace HELP
             return 1;
     }
     template <typename T = double>
-    void print_vec(std::vector<T> vec)
+    inline void print_vec(std::vector<T> vec)
     {
 
         for (T i : vec)
@@ -84,7 +84,7 @@ namespace HELP
         printf("\n");
     }
     template <typename T = std::complex<double>>
-    void print_vec_complex(std::vector<T> vec)
+    inline void print_vec_complex(std::vector<T> vec)
     {
         for (T i : vec)
         {
@@ -93,7 +93,7 @@ namespace HELP
         printf("\n");
     }
 
-    wav_hdr read_wav(const char * fin, std::vector<int16_t>* out) {
+    inline wav_hdr read_wav(const char * fin, std::vector<int16_t>* out) {
         FILE* input;
         wav_hdr hdr;
         try {
@@ -132,7 +132,7 @@ namespace HELP
         }
         return hdr;
     }
-    void write_wav(const char * fout,const  std::vector<int16_t>& in, wav_hdr wav_details) {
+    inline void write_wav(const char * fout,const  std::vector<int16_t>& in, wav_hdr wav_details) {
         FILE* output;
         try {
         
@@ -155,7 +155,7 @@ namespace HELP
     constexpr long double MAX_RELATIVE_ERROR_DOUBLE = 1e-14;
     // MAKE SURE TO CHANGE BOTH TEMPLATES
     template <typename T>
-    long double relative_error(std::vector<T> computed_vec, std::vector<T> reference_vec)
+    inline long double relative_error(std::vector<T> computed_vec, std::vector<T> reference_vec)
     {
             // calculate relative error
     // double errorNorm = 0.0;
@@ -192,7 +192,7 @@ namespace HELP
     }
 
     template <typename T>
-    long double relative_error(std::vector<std::complex<T>> computed_vec, std::vector<std::complex<T>> reference_vec)
+    inline long double relative_error(std::vector<std::complex<T>> computed_vec, std::vector<std::complex<T>> reference_vec)
     {
         //printf("Size of long double: %d-bit\n", sizeof(long double) * 8);
         size_t length = computed_vec.size();
@@ -230,7 +230,7 @@ namespace HELP
     }
 
     template <typename O, typename R>
-    std::vector<R> vec_cast(const std::vector<O> &original) {
+    inline std::vector<R> vec_cast(const std::vector<O> &original) {
         std::vector<R> result;
         for (O item : original) {
             result.push_back(static_cast<R>(item));
