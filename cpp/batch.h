@@ -98,7 +98,7 @@ void b_main() {
     const std::vector<std::vector<TYPE_USED>> input_sigs = {fdata, fdata_smol};
     const std::vector<std::vector<TYPE_USED>> input_kern = {myKernel, myKernel_smol};
 
-    std::vector<std::vector<TYPE_USED>> batch_result = ConvExa::batch_convolution(input_sigs, input_kern);
+    std::vector<std::vector<TYPE_USED>> batch_result = ConvExa::batch_convolve(input_sigs, input_kern);
     
     long double re = HELP::relative_error(batch_result[0], myResult_h);
     printf("Relative Error batch [0]: %.8Lf ", re);
@@ -114,6 +114,10 @@ void b_main() {
     else
         printf("FAIL\n");
 
+    for (auto val: batch_result[1]) {
+        printf("%f, ", val);
+    }
+    printf("\n");
 
 
 

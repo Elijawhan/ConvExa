@@ -60,7 +60,7 @@ float CXTiming::device_convolve_fft(const std::vector<T> &signal, const std::vec
     checkCudaErrors(cudaMalloc(&d_output, fft_size * sizeof(T)));
 
 
-    // checkCudaErrors(cudaMemset(d_signal, 0, fft_size * sizeof(T))); // Zero Pad
+    checkCudaErrors(cudaMemset(d_signal, 0, fft_size * sizeof(T))); // Zero Pad
     checkCudaErrors(cudaMemcpy(d_signal, signal.data(), signal.size() * sizeof(T), cudaMemcpyHostToDevice));
     
     checkCudaErrors(cudaMemset(d_kernel, 0, fft_size * sizeof(T))); // Zero Pad

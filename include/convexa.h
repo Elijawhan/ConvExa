@@ -24,6 +24,8 @@ namespace ConvExa
     template <typename T>
     std::vector<std::vector<T>> batch_convolution(const std::vector<std::vector<T>> &signals, const std::vector<std::vector<T>> &kernels);
 
+    template <typename T>
+    std::vector<std::vector<T>> batch_convolve(const std::vector<std::vector<T>> &signals, const std::vector<std::vector<T>> &kernels);
 
     
 

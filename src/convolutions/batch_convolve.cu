@@ -5,6 +5,8 @@
 #include <cufft.h>
 typedef enum CX_Conv_Type {OVERLAP_ADD, FFT_BASED} CXConv_t;
 
+#define DEBUG false
+
 template <typename T>
 struct conv_ptrs
 {
@@ -113,7 +115,7 @@ void launch_convolution(conv_ptrs<T> group, size_t signal_length, size_t kernel_
         dim3 gridSize(blocks);
         size_t shmem = (1024 + kernel_length) * sizeof(T);
         CXKernels::overlap_save_full_convolve<T> <<< gridSize, blockSize, shmem, group.stream >>> (
-            group.device_ptrs[0], group.device_ptrs[1], group.device_ptrs[1], 
+            group.device_ptrs[0], group.device_ptrs[1], group.device_ptrs[2], 
             signal_length, kernel_length, result_length
         );
 
@@ -140,7 +142,7 @@ void launch_convolution(conv_ptrs<T> group, size_t signal_length, size_t kernel_
 }
 
 template <typename T>
-std::vector<std::vector<T>> batch_convolve(const std::vector<std::vector<T>> &signals, const std::vector<std::vector<T>> &kernels)
+std::vector<std::vector<T>> ConvExa::batch_convolve(const std::vector<std::vector<T>> &signals, const std::vector<std::vector<T>> &kernels)
 {
     std::vector<std::vector<T>> results;
     std::vector<conv_ptrs<T>> workspace;
@@ -150,6 +152,12 @@ std::vector<std::vector<T>> batch_convolve(const std::vector<std::vector<T>> &si
     {
         conv_ptrs<T> group = choose_convolution(signals[idx], kernels[idx]);
         workspace.push_back(group);
+    }
+    if (DEBUG) {
+        for (conv_ptrs<T> group: workspace) {
+            printf("Call Type: %d \n", group.conv_type);
+            // printf("", )
+        }
     }
 
     for (uint32_t idx = 0; idx < signals.size(); idx++)
@@ -171,6 +179,15 @@ std::vector<std::vector<T>> batch_convolve(const std::vector<std::vector<T>> &si
         checkCudaErrors(cudaStreamSynchronize(workspace[idx].stream));
         checkCudaErrors(cudaMemcpyAsync(results[idx].data(), workspace[idx].device_ptrs[2], result_size,
                         cudaMemcpyDeviceToHost, workspace[idx].stream));
+
+        if (workspace[idx].conv_type == FFT_BASED) {
+            uint32_t fft_size = 1;
+            while (fft_size < result_length) fft_size <<= 1;
+            T scale = 1.0 / static_cast<T>(fft_size);
+            for (int i = 0; i < results[idx].size(); i ++) {
+                results[idx][i]  *= scale;
+            }
+        }
 
         // Memory copy is complete
         checkCudaErrors(cudaStreamSynchronize(workspace[idx].stream));
@@ -194,4 +211,4 @@ std::vector<std::vector<T>> batch_convolve(const std::vector<std::vector<T>> &si
     checkCudaErrors(cudaDeviceSynchronize());
     return results;
 }
-template std::vector<std::vector<float>> batch_convolve(const std::vector<std::vector<float>> &signals, const std::vector<std::vector<float>> &kernels);
+template std::vector<std::vector<float>> ConvExa::batch_convolve(const std::vector<std::vector<float>> &signals, const std::vector<std::vector<float>> &kernels);
