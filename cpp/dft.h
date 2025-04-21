@@ -43,7 +43,7 @@ void d_main()
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<double> dist(1.0, 100.0);
-    for (int i = 0; i < pow(2,10); i++)
+    for (int i = 0; i < pow(2,24); i++)
     {
         myVec.push_back(dist(gen));
         myVecf.push_back(static_cast<float>(myVec.back()));

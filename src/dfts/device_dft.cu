@@ -97,6 +97,11 @@ float CXTiming::device_dft(const std::vector<T> &signal, std::vector<std::comple
     checkCudaErrors(cudaFree(device_a));
     checkCudaErrors(cudaFree(device_c));
 
+    T scale = 1.0 / static_cast<T>(length);
+    for (int i = 0; i < result.size(); ++i) {
+        result[i] *= length;
+    }
+
     return milliseconds;
 }
 template float CXTiming::device_dft<double>(const std::vector<double> &signal, std::vector<std::complex<double>> &result);

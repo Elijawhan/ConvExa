@@ -48,6 +48,11 @@ std::vector<std::complex<T>> host_fft_radix2(const std::vector<T> &signal)
             }
         }
     }
+
+    T scale = 1.0 / static_cast<T>(N);
+    for (int i = 0; i < result.size(); ++i) {
+        result[i] *= N;
+    }
     return result;
 }
 }

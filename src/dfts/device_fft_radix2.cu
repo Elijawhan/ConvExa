@@ -143,6 +143,12 @@ float CXTiming::device_fft_radix2(const std::vector<T> &signal, std::vector<std:
     checkCudaErrors(cudaFree(device_c));
     checkCudaErrors(cudaFree(device_temp1));
     checkCudaErrors(cudaFree(device_temp2));
+
+    T scale = 1.0 / static_cast<T>(length);
+    for (int i = 0; i < result.size(); ++i) {
+        result[i] *= length;
+    }
+
     return milliseconds;
 }
 template float CXTiming::device_fft_radix2<double>(const std::vector<double> &signal, std::vector<std::complex<double>> &result);

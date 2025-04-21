@@ -44,6 +44,11 @@ float CXTiming::cufft(const std::vector<T> &signal, std::vector<std::complex<T>>
     checkCudaErrors(cudaFree(device_c));
     cufftDestroy(plan);
 
+    T scale = 1.0 / static_cast<T>(length);
+    for (int i = 0; i < result.size(); ++i) {
+        result[i] *= length;
+    }
+
     return milliseconds;
 }
 template float CXTiming::cufft<float>(const std::vector<float> &signal, std::vector<std::complex<float>> &result);
@@ -86,6 +91,11 @@ float CXTiming::cufft<double>(const std::vector<double> &signal, std::vector<std
     checkCudaErrors(cudaFree(device_a));
     checkCudaErrors(cudaFree(device_c));
     cufftDestroy(plan);
+
+    double scale = 1.0 / static_cast<double>(length);
+    for (int i = 0; i < result.size(); ++i) {
+        result[i] *= length;
+    }
     
     return milliseconds;
 }

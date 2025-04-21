@@ -26,6 +26,10 @@ std::vector<std::complex<T>> host_dft(const std::vector<T> &signal)
         }
         // Summation is complete, move on to next FFT component
     }
+    T scale = 1.0 / static_cast<T>(N);
+    for (int i = 0; i < result.size(); ++i) {
+        result[i] *= N;
+    }
     return result;
 }
 
@@ -47,6 +51,11 @@ std::vector<std::complex<float>> host_dft(const std::vector<float> &signal)
             );
             result.back() += static_cast<std::complex<float>>(signal[jdx]) * exponential;
         }
+    }
+
+    float scale = 1.0 / static_cast<float>(N);
+    for (int i = 0; i < result.size(); ++i) {
+        result[i] *= N;
     }
     return result;
 }
