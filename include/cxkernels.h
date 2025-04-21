@@ -3,6 +3,7 @@
 #include <math_constants.h>
 #include <vector>
 #include <cuda_runtime.h>
+#include <cufft.h>
 namespace ConvExa
 {
     template <typename T>
@@ -54,4 +55,5 @@ namespace CXKernels
 {
 template <typename T>
 __global__ void overlap_save_full_convolve(T *A, T *B, T *C, unsigned int aN, unsigned int bN, unsigned int cN);
+__global__ void vec_multiply_complex_f(cufftComplex *A, cufftComplex *B, cufftComplex *C, unsigned int N);
 }
