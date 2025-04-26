@@ -202,6 +202,7 @@ void launch_convolution(conv_ptrs<T> group, size_t signal_length, size_t kernel_
         int blocks = signal_length / blockSize.x + 1;
         dim3 gridSize(blocks);
         size_t shmem = (1024 + kernel_length) * sizeof(T);
+        T scale = 1.0 / static_cast<T>(fft_size);
 
         cufftExecR2C(group.plans[0], group.device_ptrs[0], group.device_fft_ptrs[0]);
         cufftExecR2C(group.plans[0], group.device_ptrs[1], group.device_fft_ptrs[1]);
@@ -211,6 +212,9 @@ void launch_convolution(conv_ptrs<T> group, size_t signal_length, size_t kernel_
         );
 
         cufftExecC2R(group.plans[1], group.device_fft_ptrs[2], group.device_ptrs[2]);
+        CXKernels::vec_multiply_real <<< gridSize, blockSize, 0, group.stream >>> (
+            group.device_ptrs[2], scale , fft_size
+        );
     }
 }
 
@@ -243,6 +247,7 @@ void launch_convolution(conv_ptrs<double> group, size_t signal_length, size_t ke
         int blocks = signal_length / blockSize.x + 1;
         dim3 gridSize(blocks);
         size_t shmem = (1024 + kernel_length) * sizeof(double);
+        double scale = 1.0 / static_cast<double>(fft_size);
 
         cufftExecD2Z(group.plans[0], group.device_ptrs[0], group.device_fft_ptrs[0]);
         cufftExecD2Z(group.plans[0], group.device_ptrs[1], group.device_fft_ptrs[1]);
@@ -251,6 +256,9 @@ void launch_convolution(conv_ptrs<double> group, size_t signal_length, size_t ke
         );
 
         cufftExecZ2D(group.plans[1], group.device_fft_ptrs[2], group.device_ptrs[2]);
+        CXKernels::vec_multiply_real <<< gridSize, blockSize, 0, group.stream >>> (
+            group.device_ptrs[2], scale , fft_size
+        );
     }
 }
 
@@ -296,14 +304,14 @@ std::vector<std::vector<T>> ConvExa::batch_convolve(const std::vector<std::vecto
         checkCudaErrors(cudaMemcpyAsync(results[idx].data(), workspace[idx].device_ptrs[2], result_size,
                         cudaMemcpyDeviceToHost, workspace[idx].stream));
 
-        if (workspace[idx].conv_type == FFT_BASED) {
-            uint32_t fft_size = 1;
-            while (fft_size < result_length) fft_size <<= 1;
-            T scale = 1.0 / static_cast<T>(fft_size);
-            for (int i = 0; i < results[idx].size(); i ++) {
-                results[idx][i]  *= scale;
-            }
-        }
+        // if (workspace[idx].conv_type == FFT_BASED) {
+        //     uint32_t fft_size = 1;
+        //     while (fft_size < result_length) fft_size <<= 1;
+        //     T scale = 1.0 / static_cast<T>(fft_size);
+        //     for (int i = 0; i < results[idx].size(); i ++) {
+        //         results[idx][i]  *= scale;
+        //     }
+        // }
 
         // Memory copy is complete
         checkCudaErrors(cudaStreamSynchronize(workspace[idx].stream));

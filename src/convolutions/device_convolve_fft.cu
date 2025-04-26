@@ -50,6 +50,17 @@ namespace CXKernels
             C[n].y = ar * bi + ai * br;
         }
     }
+    template <typename T>
+    __global__ void vec_multiply_real(T *A, T Correction, unsigned int N)
+    {
+        unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
+        for (int n = index; n < N; n += blockDim.x * gridDim.x) // scuttles down the signal
+        {
+            A[n] *= Correction;
+        }
+    }
+    template __global__ void vec_multiply_real(double *A, double Correction, unsigned int N);
+
 }
 template <typename T = double>
 float CXTiming::device_convolve_fft(const std::vector<T> &signal, const std::vector<T> &kernel, std::vector<T> &output)
@@ -85,6 +96,8 @@ float CXTiming::device_convolve_fft(const std::vector<T> &signal, const std::vec
     CUFFT_CHECK(cufftPlan1d(&planForward, fft_size, CUFFT_R2C, 1)); // Real-to-complex
     CUFFT_CHECK(cufftPlan1d(&planInverse, fft_size, CUFFT_C2R, 1)); // Complex-to-real
 
+    T scale = 1.0 / static_cast<T>(fft_size);
+
 
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
@@ -107,15 +120,17 @@ float CXTiming::device_convolve_fft(const std::vector<T> &signal, const std::vec
     CXKernels::vec_multiply_complex_f<<<gridSize, blockSize>>>(d_signalFFT, d_kernelFFT, d_productFFT, fft_size);
 
     CUFFT_CHECK(cufftExecC2R(planInverse, d_productFFT, d_output));
+
+    CXKernels::vec_multiply_real<<<gridSize, blockSize>>>(d_output, scale, fft_size);
     
     cudaEventRecord(stop);
 
     cudaMemcpy(output.data(), d_output, output_size * sizeof(T), cudaMemcpyDeviceToHost);
 
-    T scale = 1.0 / static_cast<T>(fft_size);
-    for (int i = 0; i < output.size(); ++i) {
-        output[i] *= scale;
-    }
+    // T scale = 1.0 / static_cast<T>(fft_size);
+    // for (int i = 0; i < output.size(); ++i) {
+    //     output[i] *= scale;
+    // }
 
     cudaEventSynchronize(stop);
     float milliseconds = 0;

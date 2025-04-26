@@ -59,4 +59,6 @@ template <typename T>
 __global__ void overlap_save_full_convolve(T *A, T *B, T *C, unsigned int aN, unsigned int bN, unsigned int cN);
 __global__ void vec_multiply_complex_f(cufftComplex *A, cufftComplex *B, cufftComplex *C, unsigned int N);
 __global__ void vec_multiply_complex_d(cufftDoubleComplex *A, cufftDoubleComplex *B, cufftDoubleComplex *C, unsigned int N);
+template <typename T>
+__global__ void vec_multiply_real(T *A, T Correction, unsigned int N);
 }
