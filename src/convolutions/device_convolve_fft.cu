@@ -36,6 +36,20 @@ namespace CXKernels
             C[n].y = ar * bi + ai * br;
         }
     }
+    __global__ void vec_multiply_complex_d(cufftDoubleComplex *A, cufftDoubleComplex *B, cufftDoubleComplex *C, unsigned int N)
+    {
+        unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
+        for (int n = index; n < N; n += blockDim.x * gridDim.x) // scuttles down the signal
+        {
+            float ar = A[n].x;
+            float ai = A[n].y;
+            float br = B[n].x;
+            float bi = B[n].y;
+            // Complex multiplication: (ar + ai*i) * (br + bi*i) = (ar*br - ai*bi) + (ar*bi + ai*br)*i
+            C[n].x = ar * br - ai * bi;
+            C[n].y = ar * bi + ai * br;
+        }
+    }
 }
 template <typename T = double>
 float CXTiming::device_convolve_fft(const std::vector<T> &signal, const std::vector<T> &kernel, std::vector<T> &output)

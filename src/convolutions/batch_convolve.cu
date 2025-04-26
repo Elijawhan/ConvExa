@@ -99,6 +99,79 @@ conv_ptrs<T> choose_convolution(const std::vector<T> &signal, const std::vector<
 
     return group;
 }
+template< >
+conv_ptrs<double> choose_convolution(const std::vector<double> &signal, const std::vector<double> &kernel)
+{
+    size_t signal_length = signal.size();
+    size_t kernel_length = kernel.size();
+    size_t classic_bigO = kernel_length * (kernel_length + signal_length - 1);
+    size_t fftconv_bigO = 3 * signal_length * log2(signal_length) + signal_length;
+
+    conv_ptrs<double> group;
+    cudaStream_t stream{0};
+    checkCudaErrors(cudaStreamCreate(&stream));
+    group.stream = stream;
+
+    double* d_signal, *d_kernel, *d_result;
+
+    if (classic_bigO < fftconv_bigO)
+    {
+        group.conv_type = OVERLAP_ADD;
+        
+        checkCudaErrors(cudaMalloc(&d_signal, signal_length * sizeof(double)));
+        checkCudaErrors(cudaMalloc(&d_kernel, kernel_length * sizeof(double)));
+        checkCudaErrors(cudaMalloc(&d_result, (signal_length + kernel_length - 1) * sizeof(double)));
+
+        checkCudaErrors(cudaMemcpyAsync(d_signal, signal.data(), signal_length * sizeof(double),
+                        cudaMemcpyHostToDevice, group.stream));
+        checkCudaErrors(cudaMemcpyAsync(d_kernel, kernel.data(), kernel_length * sizeof(double),
+                        cudaMemcpyHostToDevice, group.stream));
+
+        group.device_ptrs.push_back(d_signal);
+        group.device_ptrs.push_back(d_kernel);
+        group.device_ptrs.push_back(d_result);
+    }
+    else
+    {
+        group.conv_type = FFT_BASED;
+        
+        cufftDoubleComplex* d_signal_fft, *d_kernel_fft, *d_result_fft;
+        uint32_t fft_size = 1;
+        while (fft_size < (signal_length + kernel_length - 1)) fft_size <<= 1;
+        
+        checkCudaErrors(cudaMalloc(&d_signal, fft_size * sizeof(double)));
+        checkCudaErrors(cudaMalloc(&d_kernel, fft_size * sizeof(double)));
+        checkCudaErrors(cudaMalloc(&d_result, fft_size * sizeof(double)));
+
+        checkCudaErrors(cudaMemset(d_signal, 0, fft_size * sizeof(double)));
+        checkCudaErrors(cudaMemset(d_kernel, 0, fft_size * sizeof(double)));
+
+        checkCudaErrors(cudaMemcpyAsync(d_signal, signal.data(), signal_length * sizeof(double),
+                        cudaMemcpyHostToDevice, group.stream));
+        checkCudaErrors(cudaMemcpyAsync(d_kernel, kernel.data(), kernel_length * sizeof(double),
+                        cudaMemcpyHostToDevice, group.stream));
+
+
+        group.device_ptrs.push_back(d_signal);
+        group.device_ptrs.push_back(d_kernel);
+        group.device_ptrs.push_back(d_result);
+
+        checkCudaErrors(cudaMalloc(&d_signal_fft, fft_size * sizeof(cufftDoubleComplex)));
+        checkCudaErrors(cudaMalloc(&d_kernel_fft, fft_size * sizeof(cufftDoubleComplex)));
+        checkCudaErrors(cudaMalloc(&d_result_fft, fft_size * sizeof(cufftDoubleComplex)));
+        group.device_fft_ptrs.push_back(d_signal_fft);
+        group.device_fft_ptrs.push_back(d_kernel_fft);
+        group.device_fft_ptrs.push_back(d_result_fft);
+
+        cufftHandle planForward, planInverse;
+        cufftPlan1d(&planForward, fft_size, CUFFT_D2Z, 1);
+        cufftPlan1d(&planInverse, fft_size, CUFFT_Z2D, 1);
+        group.plans.push_back(planForward);
+        group.plans.push_back(planInverse);
+    }
+
+    return group;
+}
 
 template <typename T>
 void launch_convolution(conv_ptrs<T> group, size_t signal_length, size_t kernel_length)
@@ -140,6 +213,49 @@ void launch_convolution(conv_ptrs<T> group, size_t signal_length, size_t kernel_
         cufftExecC2R(group.plans[1], group.device_fft_ptrs[2], group.device_ptrs[2]);
     }
 }
+
+template < >
+void launch_convolution(conv_ptrs<double> group, size_t signal_length, size_t kernel_length)
+{
+    
+    checkCudaErrors(cudaStreamSynchronize(group.stream));
+
+    uint32_t result_length = (signal_length + kernel_length - 1);
+
+    if (group.conv_type == OVERLAP_ADD)
+    {
+        dim3 blockSize(1024);
+        int blocks = signal_length / blockSize.x + 1;
+        dim3 gridSize(blocks);
+        size_t shmem = (1024 + kernel_length) * sizeof(double);
+        CXKernels::overlap_save_full_convolve<double> <<< gridSize, blockSize, shmem, group.stream >>> (
+            group.device_ptrs[0], group.device_ptrs[1], group.device_ptrs[2], 
+            signal_length, kernel_length, result_length
+        );
+
+    } else if (group.conv_type == FFT_BASED) {
+
+        dim3 blockSize(1024);
+        uint32_t fft_size = 1;
+        while (fft_size < result_length) fft_size <<= 1;
+        if (fft_size < 1024)
+            blockSize.x = fft_size;
+        int blocks = signal_length / blockSize.x + 1;
+        dim3 gridSize(blocks);
+        size_t shmem = (1024 + kernel_length) * sizeof(double);
+
+        cufftExecD2Z(group.plans[0], group.device_ptrs[0], group.device_fft_ptrs[0]);
+        cufftExecD2Z(group.plans[0], group.device_ptrs[1], group.device_fft_ptrs[1]);
+        CXKernels::vec_multiply_complex_d <<< gridSize, blockSize, 0, group.stream >>> (
+            group.device_fft_ptrs[0], group.device_fft_ptrs[1], group.device_fft_ptrs[2], fft_size
+        );
+
+        cufftExecZ2D(group.plans[1], group.device_fft_ptrs[2], group.device_ptrs[2]);
+    }
+}
+
+
+
 
 template <typename T>
 std::vector<std::vector<T>> ConvExa::batch_convolve(const std::vector<std::vector<T>> &signals, const std::vector<std::vector<T>> &kernels)
@@ -211,4 +327,6 @@ std::vector<std::vector<T>> ConvExa::batch_convolve(const std::vector<std::vecto
     checkCudaErrors(cudaDeviceSynchronize());
     return results;
 }
+
 template std::vector<std::vector<float>> ConvExa::batch_convolve(const std::vector<std::vector<float>> &signals, const std::vector<std::vector<float>> &kernels);
+template std::vector<std::vector<double>> ConvExa::batch_convolve(const std::vector<std::vector<double>> &signals, const std::vector<std::vector<double>> &kernels);
