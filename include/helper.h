@@ -8,7 +8,8 @@
 #include <cstdlib>
 #include <type_traits>
 #include <tuple>
-#define numRuns 10
+#include <random>
+#define numRuns 1
 
 namespace HELP
 {
@@ -237,5 +238,18 @@ namespace HELP
         }
         return result;
     }
-
+    
+    template< typename T >
+    inline std::vector<T> generate_random_vector(size_t size, T min, T max)
+    {
+        std::vector<T> vec;
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_real_distribution<T> dist(min, max);
+        for (int i = 0; i < size; i++)
+        {
+            vec.push_back(dist(gen));
+        }
+        return vec;
+    }
 }

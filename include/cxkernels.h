@@ -48,6 +48,8 @@ namespace CXTiming
     template <typename T>
     float device_fft_radix2(const std::vector<T> &signal, std::vector<std::complex<T>> &result);
     template <typename T>
+    float device_fft_radix2_graphed(const std::vector<T> &signal, std::vector<std::complex<T>> &result);
+    template <typename T>
     float cufft(const std::vector<T> &signal, std::vector<std::complex<T>> &result);
 }
 
