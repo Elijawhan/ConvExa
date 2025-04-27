@@ -32,7 +32,7 @@ conv_ptrs<T> choose_convolution(const std::vector<T> &signal, const std::vector<
     size_t signal_length = signal.size();
     size_t kernel_length = kernel.size();
     size_t classic_bigO = kernel_length * (kernel_length + signal_length - 1);
-    size_t fftconv_bigO = 3 * signal_length * log2(signal_length) + signal_length;
+    size_t fftconv_bigO = 7 * signal_length * log2(signal_length) + signal_length;
 
     conv_ptrs<T> group;
     cudaStream_t stream{0};
@@ -105,7 +105,7 @@ conv_ptrs<double> choose_convolution(const std::vector<double> &signal, const st
     size_t signal_length = signal.size();
     size_t kernel_length = kernel.size();
     size_t classic_bigO = kernel_length * (kernel_length + signal_length - 1);
-    size_t fftconv_bigO = 3 * signal_length * log2(signal_length) + signal_length;
+    size_t fftconv_bigO = 7 * signal_length * log2(signal_length) + signal_length;
 
     conv_ptrs<double> group;
     cudaStream_t stream{0};

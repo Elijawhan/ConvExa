@@ -8,7 +8,7 @@
 void b_main() {
 
     printf("\n******************************************\n");
-    printf("Beginning Convolution Test:\n");
+    printf("Beginning Batch Convolution Test:\n");
     std::vector<int16_t> data;
     // HELP::wav_hdr hdr = HELP::read_wav("./cpp/audio/subroutines.wav", &data);
     HELP::wav_hdr hdr = HELP::read_wav("./cpp/audio/badadeedur.wav", &data);
@@ -114,11 +114,7 @@ void b_main() {
     else
         printf("FAIL\n");
 
-    for (auto val: batch_result[1]) {
-        printf("%f, ", val);
-    }
-    printf("\n");
-
+    printf("\n******************************************\n");
 
 
 }

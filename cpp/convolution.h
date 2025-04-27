@@ -122,7 +122,7 @@ void c_main() {
     else
         printf("FAIL\n");
 
-
+    // return;
     //PERFORMANCE!!!!
     // base_convolve_h_timing = 0;
     // for (int i = 0; i < numRuns; i++)
