@@ -40,20 +40,12 @@ void d_main()
 
     // RANDOM NUMBER TEST (PICK ANY SIZE; <= 1000 for host)
     
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<double> dist(1.0, 100.0);
-    for (int i = 0; i < pow(2,24); i++)
-    {
-        myVec.push_back(dist(gen));
-        myVecf.push_back(static_cast<float>(myVec.back()));
-        //myVec.push_back(static_cast<double>(i)*100000);
-        //myVecf.push_back(static_cast<float>(i)*100000);
-    }
+    myVec = HELP::generate_random_vector(pow(2,8), 1.0, 1000.0);
+    myVecf = HELP::vec_cast<double, float>(myVec);
     
     printf("Size of input vectors: %d\n", myVec.size());
     std::cout << "==================== " << "FP64" << " ====================" << std::endl;
-    /*
+    
     std::cout << "TESTING DFT:" << std::endl;
     test_dft_kernel<double>(
         static_cast<std::function< float (const std::vector<double>&, std::vector<std::complex<double>>&) >>(CXTiming::device_dft<double>),
@@ -61,15 +53,22 @@ void d_main()
         myVec, HELP::MAX_RELATIVE_ERROR_DOUBLE
     );
     std::cout << std::endl;
-    */
-    std::cout << "TESTING FFT RADIX2:" << std::endl;
+    /**/
+    std::cout << "TESTING FFT RADIX2 (Host = cuFFT):" << std::endl;
     test_dft_kernel<double>(
         static_cast<std::function< float (const std::vector<double>&, std::vector<std::complex<double>>&) >>(CXTiming::device_fft_radix2<double>),
         static_cast<std::function< float (const std::vector<double>&, std::vector<std::complex<double>>&) >>(CXTiming::cufft<double>),
         myVec, HELP::MAX_RELATIVE_ERROR_DOUBLE
     );
+
+    std::cout << "TESTING FFT RADIX2 w/ CUDA Graphs (Host = cuFFT):" << std::endl;
+    test_dft_kernel<double>(
+        static_cast<std::function< float (const std::vector<double>&, std::vector<std::complex<double>>&) >>(CXTiming::device_fft_radix2_graphed<double>),
+        static_cast<std::function< float (const std::vector<double>&, std::vector<std::complex<double>>&) >>(CXTiming::cufft<double>),
+        myVec, HELP::MAX_RELATIVE_ERROR_DOUBLE
+    );
     std::cout << std::endl;
-    /*
+    /* HOST CODE HAS SIGNIFICANT ERROR W/ CUFFT
     std::cout << "TESTING FFT RADIX2 W/ HOST:" << std::endl;
     test_dft_kernel<double>(
         static_cast<std::function< float (const std::vector<double>&, std::vector<std::complex<double>>&) >>(CXTiming::host_fft_radix2<double>),
@@ -80,23 +79,32 @@ void d_main()
     */
     std::cout << std::endl;
     std::cout << "==================== " << "FP32" << " ====================" << std::endl;
-    /*
+    
     std::cout << "TESTING DFT:" << std::endl;
     test_dft_kernel<float>(
         static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::device_dft<float>),
-        static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::host_dft<float>),
+        static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::device_dft<float>),
         myVecf, HELP::MAX_RELATIVE_ERROR_FLOAT
     );
     std::cout << std::endl;
-    */
-    std::cout << "TESTING FFT RADIX2:" << std::endl;
+    
+    std::cout << "TESTING FFT RADIX2 (Host = cuFFT):" << std::endl;
     test_dft_kernel<float>(
         static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::device_fft_radix2<float>),
         static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::cufft<float>),
         myVecf, HELP::MAX_RELATIVE_ERROR_FLOAT
     );
     std::cout << std::endl;
-    /*
+
+    std::cout << "TESTING FFT RADIX2 w/ CUDA Graphs (Host = cuFFT):" << std::endl;
+    test_dft_kernel<float>(
+        static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::device_fft_radix2_graphed<float>),
+        static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::cufft<float>),
+        myVecf, HELP::MAX_RELATIVE_ERROR_FLOAT
+    );
+    std::cout << std::endl;
+    
+    /* HOST CODE HAS SIGNIFICANT ERROR W/ CUFFT
     std::cout << "TESTING FFT RADIX2 W/ HOST:" << std::endl;
     test_dft_kernel<float>(
         static_cast<std::function< float (const std::vector<float>&, std::vector<std::complex<float>>&) >>(CXTiming::host_fft_radix2<float>),

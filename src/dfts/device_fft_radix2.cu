@@ -36,6 +36,7 @@ __global__ void radix2_preprocess(const T* signal, const size_t length, cuda::st
         reverse >>= (32 - logN);
         result[index] = cuda::std::complex<T>(signal[reverse], 0);
     }
+    //if (index == 0) printf("Hello from radix2_preprocess!\n");
 }
 
 
@@ -82,51 +83,58 @@ __global__ void device_fft_radix2_write(cuda::std::complex<T>* result, const siz
         result[kdx + half] = temp_result[kdx] - temp_result[kdx + half];
     }
 }
+
+__global__ void debug_kernel() 
+{
+    printf("Hello from debug_kernel!\n");
+}
 }
 
 template <typename T>
 float CXTiming::device_fft_radix2(const std::vector<T> &signal, std::vector<std::complex<T>> &result)
 {
-    T* device_a = nullptr;
-    cuda::std::complex<T>* device_c = nullptr;
+    T* device_signal = nullptr;
+    cuda::std::complex<T>* device_result = nullptr;
     cuda::std::complex<T>* device_temp1 = nullptr;
-    cuda::std::complex<T>* device_temp2 = nullptr;
     uint32_t length = signal.size();
+    int fft_size = 1;
+    // Choose size of FFT (Nearest Pow 2)
+    while (fft_size < length) fft_size <<= 1;
 
-    size_t byte_size_sig = length * sizeof(T);
-    size_t byte_size_output = length * sizeof(std::complex<T>);
-    result.resize(length);
+    size_t byte_size_sig_small = length * sizeof(T);
+    size_t byte_size_sig = fft_size * sizeof(T);
+    size_t byte_size_output = fft_size * sizeof(std::complex<T>);
+    result.resize(fft_size);
 
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
 
-    checkCudaErrors(cudaMalloc(&device_a, byte_size_sig));
-    checkCudaErrors(cudaMemcpy(device_a, signal.data(), byte_size_sig, cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMalloc(&device_signal, byte_size_sig));
+    checkCudaErrors(cudaMemset(device_signal, 0, fft_size * sizeof(T))); // Zero Pad
+    checkCudaErrors(cudaMemcpy(device_signal, signal.data(), byte_size_sig_small, cudaMemcpyHostToDevice));
 
-    checkCudaErrors(cudaMalloc(&device_c, byte_size_output));
+    checkCudaErrors(cudaMalloc(&device_result, byte_size_output));
     checkCudaErrors(cudaMalloc(&device_temp1, byte_size_output));
-    checkCudaErrors(cudaMalloc(&device_temp2, byte_size_output));
 
     dim3 num_threads = 1024;
-    dim3 num_blocks = (length + num_threads.x - 1) / num_threads.x;
+    dim3 num_blocks = (fft_size + num_threads.x - 1) / num_threads.x;
 
-    int num_stages = log2f(length);
-    
-    if (length > 1)
+    int num_stages = log2f(fft_size);
+    if (fft_size > 1)
     {
         cudaEventRecord(start);
         CXKernels::radix2_preprocess<<<num_blocks, num_threads>>>(
-            device_a, length, device_c
+            device_signal, fft_size, device_result
         );
         for (int step = 1; step <= num_stages; step++)
         {
             CXKernels::device_fft_radix2_read<<<num_blocks, num_threads>>>(
-                device_c, length, device_temp1, step
+                device_result, fft_size, device_temp1, step
             );
             //cudaDeviceSynchronize();
             CXKernels::device_fft_radix2_write<<<num_blocks, num_threads>>>(
-                device_c, length, device_temp1, step
+                device_result, fft_size, device_temp1, step
             );
             cudaDeviceSynchronize();
         }
@@ -134,22 +142,111 @@ float CXTiming::device_fft_radix2(const std::vector<T> &signal, std::vector<std:
     }
     cudaEventSynchronize(stop);
     // Finish Computations before this block
-    checkCudaErrors(cudaMemcpy(result.data(), device_c, byte_size_output, cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(result.data(), device_result, byte_size_output, cudaMemcpyDeviceToHost));
 
     float milliseconds = 0;
     cudaEventElapsedTime(&milliseconds, start, stop);
 
-    checkCudaErrors(cudaFree(device_a));
-    checkCudaErrors(cudaFree(device_c));
+    checkCudaErrors(cudaFree(device_signal));
+    checkCudaErrors(cudaFree(device_result));
     checkCudaErrors(cudaFree(device_temp1));
-    checkCudaErrors(cudaFree(device_temp2));
 
-    T scale = 1.0 / static_cast<T>(length);
+    T scale = 1.0 / static_cast<T>(fft_size);
     for (int i = 0; i < result.size(); ++i) {
-        result[i] *= length;
+        result[i] *= fft_size;
     }
-
     return milliseconds;
 }
 template float CXTiming::device_fft_radix2<double>(const std::vector<double> &signal, std::vector<std::complex<double>> &result);
 template float CXTiming::device_fft_radix2<float>(const std::vector<float> &signal, std::vector<std::complex<float>> &result);
+
+template <typename T>
+float CXTiming::device_fft_radix2_graphed(const std::vector<T> &signal, std::vector<std::complex<T>> &result)
+{
+    T* device_signal = nullptr;
+    cuda::std::complex<T>* device_result = nullptr;
+    cuda::std::complex<T>* device_temp1 = nullptr;
+    uint32_t length = signal.size();
+    int fft_size = 1;
+    // Choose size of FFT (Nearest Pow 2)
+    while (fft_size < length) fft_size <<= 1;
+
+    size_t byte_size_sig_small = length * sizeof(T);
+    size_t byte_size_sig = fft_size * sizeof(T);
+    size_t byte_size_output = fft_size * sizeof(std::complex<T>);
+    result.resize(fft_size);
+
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    checkCudaErrors(cudaMalloc(&device_signal, byte_size_sig));
+    checkCudaErrors(cudaMemset(device_signal, 0, fft_size * sizeof(T))); // Zero Pad
+    checkCudaErrors(cudaMemcpy(device_signal, signal.data(), byte_size_sig_small, cudaMemcpyHostToDevice));
+
+    checkCudaErrors(cudaMalloc(&device_result, byte_size_output));
+    checkCudaErrors(cudaMalloc(&device_temp1, byte_size_output));
+
+    dim3 num_threads = 1024;
+    dim3 num_blocks = (fft_size + num_threads.x - 1) / num_threads.x;
+
+    cudaStream_t stream;
+    checkCudaErrors(cudaStreamCreate(&stream));
+    cudaGraph_t graph;
+    checkCudaErrors(cudaGraphCreate(&graph, 0));
+    cudaGraphNode_t prev_node = nullptr;
+
+    int num_stages = log2f(fft_size);
+    if (fft_size > 1)
+    {
+        checkCudaErrors(cudaStreamBeginCapture(stream, cudaStreamCaptureModeGlobal));
+        CXKernels::radix2_preprocess<<<num_blocks, num_threads, 0, stream>>>(
+            device_signal, fft_size, device_result
+        );
+        for (int step = 1; step <= num_stages; step++)
+        {
+            CXKernels::device_fft_radix2_read<<<num_blocks, num_threads, 0, stream>>>(
+                device_result, fft_size, device_temp1, step
+            );
+            //cudaDeviceSynchronize();
+            CXKernels::device_fft_radix2_write<<<num_blocks, num_threads, 0, stream>>>(
+                device_result, fft_size, device_temp1, step
+            );
+            //cudaStreamSynchronize(stream);
+        }
+        checkCudaErrors(cudaStreamEndCapture(stream, &graph));
+    }
+
+    // Create graph and stream
+    cudaGraphExec_t graph_exec;
+    cudaGraphNode_t error_node;
+
+    checkCudaErrors(cudaGraphInstantiate(&graph_exec, graph, cudaGraphInstantiateFlagDeviceLaunch));
+    cudaEventRecord(start, stream);
+
+    checkCudaErrors(cudaGraphLaunch(graph_exec, stream));
+
+    cudaEventRecord(stop, stream);
+    cudaStreamWaitEvent(stream, stop);
+
+    // Finish Computations before this block
+    checkCudaErrors(cudaMemcpy(result.data(), device_result, byte_size_output, cudaMemcpyDeviceToHost));
+
+    float milliseconds = 0;
+    cudaEventElapsedTime(&milliseconds, start, stop);
+
+    checkCudaErrors(cudaFree(device_signal));
+    checkCudaErrors(cudaFree(device_result));
+    checkCudaErrors(cudaFree(device_temp1));
+    checkCudaErrors(cudaGraphDestroy(graph));
+    checkCudaErrors(cudaGraphExecDestroy(graph_exec));
+    checkCudaErrors(cudaStreamDestroy(stream));
+
+    T scale = 1.0 / static_cast<T>(fft_size);
+    for (int i = 0; i < result.size(); ++i) {
+        result[i] *= fft_size;
+    }
+    return milliseconds;
+}
+template float CXTiming::device_fft_radix2_graphed<double>(const std::vector<double> &signal, std::vector<std::complex<double>> &result);
+template float CXTiming::device_fft_radix2_graphed<float>(const std::vector<float> &signal, std::vector<std::complex<float>> &result);

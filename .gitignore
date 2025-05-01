@@ -14,3 +14,4 @@ __pycache__
 *.wav
 *.nsys-rep
 *.ncu-rep
+.panfs*
